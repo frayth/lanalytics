@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="index.css">
+  <title>LAnalytics - Gestion des activités</title>
+</head>
+<body>
+  <header>
+    <h1><span>L</span>Analytics</h1>
+
+    <button type="button" id="menuToggle" aria-label="Ouvrir le menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav id="navMenu">
+      <div id="disconnect">
+        <a href="/log/login.html" id="userConnect" class="nav-user-link">
+          <img src="../Image/profil.png" alt="Profil" id="iconProfil">
+          <span>Connexion</span>
+        </a>
+        <a href="/log/login.html" id="userDisconnect" class="nav-disconnect-link" hidden>Déconnexion</a>
+      </div>
+
+      <a href="index.html" class="active">Ajouter une Activité</a>
+      <a href="/show/show.html">Voir les données</a>
+      <a href="#">Menu 3</a>
+    </nav>
+  </header>
+
+  <main id="showContent" class="container">
+    <section id="addContent" class="card">
+      <h3>Ajouter une activité</h3>
+      <form id="formAdd" action="/add" method="POST" title="Ajouter une dépense">
+        
+        <div id="firstSelectDiv" class="form-group row">
+          <div class="field">
+            <label for="type">Type</label>
+            <select name="type" id="type">
+              <option value="depense">Dépense</option>
+              <option value="revenue">Revenu</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="name">Catégorie</label>
+            <div class="input-with-action">
+              <select name="name" id="name" required>
+                <option value="">Sélectionner une catégorie</option>
+              </select>
+              <button type="button" id="addCategory" class="btn-icon" title="Ajouter une catégorie">
+                <img src="/Image/plus.png" alt="+">
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="secondSelectDiv" class="form-group row">
+          <div class="field">
+            <label for="montant">Montant (€)</label>
+            <input type="number" min="0.1" id="montant" step="0.01" name="montant" required>
+          </div>
+          <div class="field checkbox-field">
+            <label for="frais" id="labelFrais">
+              <input type="checkbox" id="frais" name="frais">
+              Frais
+            </label>
+          </div>
+        </div>
+
+        <div id="DescripSelectDiv" class="form-group">
+          <label for="description">Description</label>
+          <input type="text" id="description" name="description">
+        </div>
+
+        <div id="dateSelectDiv" class="form-group">
+          <label for="dateInput">Date</label>
+          <input type="date" id="dateInput" name="date" required>
+        </div>
+
+        <div id="buttonSelectDiv" class="form-actions">
+          <button type="submit" id="buttonAdd" name="submit" class="btn-primary">Envoyer</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="lastAdd" class="card">
+      <h3>Dernières Activités</h3>
+      <div id="lastContent"></div>
+    </section>
+  </main>
+
+  <script src="/log/user.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

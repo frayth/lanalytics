@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="profil.css">
+  <title>LAnalytics - Gestion des Catégories</title>
+</head>
+
+<body>
+  <header>
+    <h1><span>L</span>Analytics</h1>
+
+    <input type="checkbox" id="menuToggle" hidden>
+    <label for="menuToggle" class="burger-btn" aria-label="Ouvrir le menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </label>
+
+    <nav>
+      <div id="disconnect">
+        <a href="#" id="userConnect">Connexion</a>
+        <a href="/log/login.html" id="userDisconnect" hidden>Déconnexion</a>
+      </div>
+
+      <a href="../index.html">Ajouter une Activité</a>
+      <a href="../show/show.html">Voir les données</a>
+      <a href="#">Menu 3</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div id="categoryDiv" class="card">
+      <div class="card-header">
+        <h2>Définir vos catégories</h2>
+        <img src="../Image/max.png" alt="Ouvrir/Fermer" class="set">
+      </div>
+      
+      <div class="choice" hidden>
+        <fieldset>
+          <legend>Type de création</legend>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" onchange="getFolder()" class="radioCat" id="main" name="main" value="main" checked>
+              Grande Catégorie
+            </label>
+            <label class="radio-label">
+              <input type="radio" onchange="getFolder()" class="radioCat" id="second" name="main" value="second">
+              Sous-Catégorie
+            </label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="show" class="show-form" hidden></div>
+    </div>
+
+    <div id="categoryDelDiv" class="card">
+      <div class="card-header">
+        <h2>Gérer vos catégories</h2>
+        <img src="../Image/max.png" alt="Ouvrir/Fermer" class="set">
+      </div>
+
+      <div class="choice" hidden>
+        <fieldset>
+          <legend>Type de suppression</legend>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" onchange="getDelFolder()" class="radioCat" id="mainDel" name="mainDel" value="main" checked>
+              Grande Catégorie
+            </label>
+            <label class="radio-label">
+              <input type="radio" onchange="getDelFolder()" class="radioCat" id="secondDel" name="mainDel" value="second">
+              Sous-Catégorie
+            </label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="show-form" hidden></div>
+    </div>
+
+    <div id="favoritesDiv" class="card">
+      <div class="card-header">
+        <h2>Vos Catégories Favorites</h2>
+      </div>
+      
+      <div class="field">
+        <label for="favType">Type d'opération :</label>
+        <select id="favType">
+          <option>Dépense</option>
+          <option>Revenue</option>
+        </select>
+      </div>
+
+      <div id="favContent" class="show-form">
+        </div>
+    </div>
+  </main>
+
+  <script src="../log/user.js"></script>
+  <script src="profil.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "lanalytics",
+  "version": "1.0.0",
+  "description": "test",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "lolo",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "ejs": "^3.1.9",
+    "express": "^4.22.2",
+    "nedb": "^1.8.0",
+    "pug": "^3.0.4",
+    "sql.js": "^1.14.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frayth/LAnalitycs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/frayth/LAnalitycs/issues"
+  },
+  "homepage": "https://github.com/frayth/LAnalitycs#readme"
+}

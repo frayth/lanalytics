@@ -1,0 +1,204 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&family=Teko&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+body {
+    font-size: 15px;
+    height: 600px;
+    background-color: RGB(243, 249, 250);
+    font-family: 'Roboto', sans-serif;
+}
+#userConnect{
+    font-size: 20px;
+    text-decoration: none;
+    font-family: 'Anton';
+    color: RGB(85, 26, 139)
+}
+#userDisconnect{
+    font-family: 'Anton';
+}
+
+#form {
+    width: 400px;
+    margin: 50px auto auto auto;
+    display: flex;
+    flex-direction: column;
+    height: 510px;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    border: 8px double #216EA4;
+    border-radius: 0px 36px 0px 40px;
+    box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px;
+}
+
+#form label {
+    margin-top: 10px;
+    margin-bottom: 3px;
+    font-size: 17px;
+}
+
+#form input {
+    margin-bottom: 10px;
+    padding: 5px;
+    width:200px
+}
+
+.formElement {
+    margin-bottom: 2px;
+    height: 17px;
+}
+
+
+::-webkit-datetime-edit { text-align: center;font-size: 16px;  }
+
+#valider {
+    height: 20px;
+    font-family: Prata;
+    font-weight: 900;
+    font-size: 16px;
+    color: #feffff;
+    background-color: RGB(33, 110, 164);
+    padding: 14px 50px;
+    border: solid #0066cc 2px;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+    border-radius: 0px 31px 0px 34px;
+    transition: 854ms;
+    transform: translateY(0);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    text-transform: uppercase;
+
+}
+#valider:hover{
+    transition : 854ms;
+    padding: 14px 100px;
+    transform : translateY(-0px);
+    background-color: #73e364ce;
+    color: #fefeff;
+    border: solid 2px #0066cc;
+    }
+#error {
+    width: 100%;
+    text-align: center;
+    color: red;
+    font-size: 30px;
+    font-weight: bolder;
+
+}
+
+header {
+    display: flex;
+    background-image: url('/Image/banniere.jpg');
+    background-repeat: no-repeat;
+    background-position: 50% 30%;
+    background-size: cover;
+    border-radius: 5px;
+    width: 100%;
+    top: 0px;
+    height: 100px;
+
+    align-items: center;
+    justify-content: space-between;
+}
+
+#iconProfil {
+    width: 25px;
+    height: 25px;
+    margin-right: 2px;
+    margin-bottom: 5px;
+
+}
+
+header h1 {
+    color: rgb(94 39 94 / 61%);
+    margin: 0px 0px 0px 20px;
+}
+
+body {
+    margin: auto;
+}
+
+#divLogin {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+#pageContainer {
+    text-align: center;
+
+}
+
+#login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    margin-left: 75px;
+}
+
+#new {
+
+    margin: auto;
+}
+
+#submit {
+    box-shadow: inset 0px 1px 0px 0px #9fb4f2;
+    background: linear-gradient(to bottom, #7892c2 5%, #476e9e 100%);
+    background-color: #7892c2;
+    border-radius: 6px;
+    border: 1px solid #4e6096;
+    display: inline-block;
+    cursor: pointer;
+    color: #ffffff;
+    font-family: Arial;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 5px 15px;
+    text-decoration: none;
+    text-shadow: 0px 1px 0px #283966;
+
+}
+
+#submit:hover {
+    background: linear-gradient(to bottom, #476e9e 5%, #7892c2 100%);
+    background-color: #476e9e;
+}
+
+#submit:active {
+    position: relative;
+    top: 1px;
+}
+
+#login input {
+    margin-left: 5px;
+    margin-right: 5px;
+    padding: 5px;
+    font-size: 16px;
+    border-width: 3px;
+    border-color: #898be1;
+    background-color: #FFFFFF;
+    color: #000000;
+    border-style: solid;
+    border-radius: 16px;
+    box-shadow: -6px 0px 7px rgba(66, 66, 66, .75);
+    padding-left: 10px;
+}
+
+nav {
+    margin-right: 120px;
+}
+
+nav a {
+    background-color: rgba(255, 255, 254, 0);
+    padding: 10px;
+    transition: background-color 1.5s ease-out 100ms, border-radius 1.5s ease-out 100ms;
+    border-radius: 3px;
+}
+
+nav a:hover {
+    background-color: rgba(51, 51, 49, 0.993);
+    color: white;
+    border-radius: 10px;
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="show.css">
+  <title>LAnalytics - Voir les données</title>
+</head>
+
+<body>
+  <header>
+    <h1><span>L</span>Analytics</h1>
+
+    <input type="checkbox" id="menuToggle" hidden>
+    <label for="menuToggle" class="burger-btn" aria-label="Ouvrir le menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </label>
+
+    <nav>
+      <div id="disconnect">
+        <a href="/log/login.html" id="userConnect">Connexion</a>
+        <a href="/log/login.html" id="userDisconnect" hidden>Déconnexion</a>
+      </div>
+
+      <a href="../index.html">Ajouter une Activité</a>
+      <a href="show.html" class="active">Voir les données</a>
+      <a href="#">Menu 3</a>
+    </nav>
+  </header>
+
+  <main id="showContent" class="container">
+  </main>
+
+  <script src="../log/user.js"></script>
+  <script src="show.js"></script>
+</body>
+
+</html>

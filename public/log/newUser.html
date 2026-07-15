@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="login.css">
+    <title>Site de Lauris</title>
+</head>
+
+<body>
+    <header>
+      <h1><span style="font-style: oblique;">L</span>Analytics</h1>
+
+        <div id="divLogin">
+          <img src="../Image/profil.png" alt="iconProfil" id="iconProfil">
+          <a href="/log/login.html" id="userConnect">Connexion</a>
+        </div>
+      </header>
+
+    <div id="form">
+            <label for="newName" class="formElement" >Entrer votre Prénom</label>
+            <input type="text" id="newName" autocomplete="given-name" class="formElement">
+            <label for="newFamily" class="formElement">Entrer votre nom de famille</label>
+            <input type="text" id="newFamily" class="formElement" autocomplete="family-name">
+            <label for="mail" class="formElement">Entrer Votre e-mail</label>
+            <input type="email"  class="formElement" id="mail" autocomplete="email">
+            <label for="age" class="formElement">Sélectionner date de naissance</label>
+            <input type="date" id="age" autocomplete="bday">
+  
+
+            <label for="password" class="formElement">Entrer Votre mot de passe</label>
+            <input type="password" class="formElement"  id="password">
+            <label for="verifMdp" class="formElement" >Vérification mot de passe</label>
+            <input type="password" class="formElement" id="verifMdp" disabled>
+
+        <button id="valider" class="formElement" >Envoyer</button>
+        
+    </div>
+    <p id="error" hidden class="formElement"></p>
+    <script src="newUser.js"></script>
+</body>
+
+
+</html>
