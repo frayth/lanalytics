@@ -1,7 +1,3 @@
-/* ==========================================================================
-   LAnalytics - Script de gestion des catégories (profil.js)
-   ========================================================================== */
-
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
     getFolder();
@@ -24,7 +20,6 @@ function initUI() {
         userConnect.href = '#';
     }
 
-    // Toggle accordion pour dérouler les conteneurs
     document.querySelectorAll('.set').forEach((el, i) => {
         el.addEventListener('click', () => {
             const folder = document.querySelectorAll('.choice');
@@ -98,8 +93,8 @@ function getFolder() {
                 user: typeof user !== 'undefined' ? user.mail : '',
                 categorie: 'main',
                 type: type.value,
-                main: main.value,
-                second: second.value
+                main: main.value.trim(),
+                second: second.value.trim()
             };
 
             await sendCategoryRequest('../addCategory', data, () => {
@@ -162,7 +157,7 @@ function getFolder() {
                 categorie: 'second',
                 type: type.value,
                 main: main.value,
-                second: second.value
+                second: second.value.trim()
             };
 
             await sendCategoryRequest('../addCategory', data, () => {
@@ -302,19 +297,24 @@ async function setCat(element, num) {
 
     const key = typeElem.value === 'Revenue' ? 'revenue' : 'depense';
     const targetCategories = categories[key] || {};
-    const favoris = categories.favoris?.[key] || [];
+    const favSubs = categories.favoris?.[key]?.subs || {};
 
-    // Tri alphabétique avec favoris en tête, cohérent avec main.js
+    // Une grande catégorie est "favorite" si TOUTES ses sous-catégories le sont
+    const isMainFullyFav = (main) => {
+        const subs = targetCategories[main] || [];
+        return subs.length > 0 && subs.every(s => (favSubs[main] || []).includes(s));
+    };
+
     Object.keys(targetCategories)
         .sort((a, b) => {
-            const aFav = favoris.includes(a);
-            const bFav = favoris.includes(b);
+            const aFav = isMainFullyFav(a);
+            const bFav = isMainFullyFav(b);
             if (aFav !== bFav) return aFav ? -1 : 1;
             return a.localeCompare(b, 'fr', { sensitivity: 'base' });
         })
         .forEach(categorie => {
             const option = document.createElement('option');
-            option.textContent = favoris.includes(categorie) ? `★ ${categorie}` : categorie;
+            option.textContent = isMainFullyFav(categorie) ? `★ ${categorie}` : categorie;
             option.value = categorie;
             element.append(option);
         });
@@ -351,6 +351,7 @@ function showSousCat() {
         .forEach(sousCategorie => {
             const option = document.createElement('option');
             option.textContent = sousCategorie;
+            option.value = sousCategorie;
             element.append(option);
         });
 }
@@ -382,16 +383,10 @@ async function sendCategoryRequest(url, data, onSuccess, errorElem) {
    Gestion des favoris
    ========================================================================== */
 
-/**
- * Initialise le bloc favoris. Nécessite dans profil.html un conteneur :
- *   <div id="favContent"></div>
- *   <select id="favType"><option>Dépense</option><option>Revenue</option></select>
- * (le select peut être caché/réutilisé selon le design souhaité)
- */
 function initFavorites() {
     const favType = document.querySelector('#favType');
     const favContainer = document.querySelector('#favContent');
-    if (!favContainer) return; // bloc favoris non présent dans cette page
+    if (!favContainer) return;
 
     if (favType) {
         favType.addEventListener('change', renderFavorites);
@@ -413,51 +408,135 @@ function renderFavorites() {
     const storedData = JSON.parse(localStorage.getItem('dataAnalytics') || '{}');
     const key = (favType && favType.value === 'Revenue') ? 'revenue' : 'depense';
     const categories = storedData.categories?.[key] || {};
-    const favoris = storedData.categories?.favoris?.[key] || [];
+    const favSubs = storedData.categories?.favoris?.[key]?.subs || {};
 
     container.innerHTML = '';
 
-    Object.keys(categories)
-        .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
-        .forEach(main => {
-            const isFav = favoris.includes(main);
-            const row = document.createElement('div');
-            row.className = 'favRow';
-            row.innerHTML = `
-                <span>${main}</span>
-                <button type="button" class="favBtn" data-main="${main}" aria-label="Basculer favori">
-                    ${isFav ? '★' : '☆'}
+    const sortedMains = Object.keys(categories)
+        .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+
+    // ---------- Section 1 : résumé des favoris ----------
+    const favTitle = document.createElement('h3');
+    favTitle.textContent = '★ Favoris';
+    favTitle.style.margin = '0.5rem 0 0.25rem';
+    container.append(favTitle);
+
+    const mainsWithFav = sortedMains.filter(main => (favSubs[main] || []).length > 0);
+
+    if (mainsWithFav.length === 0) {
+        const empty = document.createElement('p');
+        empty.style.color = '#888';
+        empty.style.fontSize = '0.9em';
+        empty.textContent = 'Aucun favori pour le moment.';
+        container.append(empty);
+    } else {
+        mainsWithFav.forEach(main => {
+            const mainLine = document.createElement('p');
+            mainLine.style.fontWeight = 'bold';
+            mainLine.style.margin = '0.4rem 0 0.15rem';
+            mainLine.textContent = main;
+            container.append(mainLine);
+
+            [...(favSubs[main] || [])]
+                .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+                .forEach(sub => {
+                    const subLine = document.createElement('p');
+                    subLine.style.margin = '0 0 0 1rem';
+                    subLine.style.color = '#555';
+                    subLine.textContent = sub;
+                    container.append(subLine);
+                });
+        });
+    }
+
+    const separator = document.createElement('hr');
+    separator.style.margin = '0.75rem 0';
+    container.append(separator);
+
+    // ---------- Section 2 : toutes les catégories ----------
+    const allTitle = document.createElement('h3');
+    allTitle.textContent = 'Toutes les catégories';
+    allTitle.style.margin = '0.5rem 0 0.25rem';
+    container.append(allTitle);
+
+    sortedMains.forEach(main => {
+        const subList = [...(categories[main] || [])]
+            .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+        const favSubList = favSubs[main] || [];
+        const isMainFullyFav = subList.length > 0 && subList.every(s => favSubList.includes(s));
+
+        // Ligne pour la grande catégorie : clic = bascule TOUTES ses sous-catégories
+        const mainRow = document.createElement('div');
+        mainRow.className = 'favRow mainRow';
+        mainRow.style.display = 'flex';
+        mainRow.style.justifyContent = 'space-between';
+        mainRow.style.alignItems = 'center';
+        mainRow.style.padding = '0.5rem';
+        mainRow.style.fontWeight = 'bold';
+        mainRow.style.borderBottom = '1px solid #ccc';
+
+        mainRow.innerHTML = `
+            <span>${main}</span>
+            <button type="button" class="favBtn ${isMainFullyFav ? 'active' : ''}" data-main="${main}" data-type="main" aria-label="Basculer favori de toute la catégorie">
+                ${isMainFullyFav ? '★' : '☆'}
+            </button>
+        `;
+        container.append(mainRow);
+
+        // Lignes pour chaque sous-catégorie : clic = bascule uniquement celle-ci
+        subList.forEach(sub => {
+            const isSubFav = favSubList.includes(sub);
+
+            const subRow = document.createElement('div');
+            subRow.className = 'favRow subRow';
+            subRow.style.display = 'flex';
+            subRow.style.justifyContent = 'space-between';
+            subRow.style.alignItems = 'center';
+            subRow.style.padding = '0.35rem 0.5rem 0.35rem 1.5rem';
+            subRow.style.borderBottom = '1px solid #eee';
+
+            subRow.innerHTML = `
+                <span style="font-size: 0.9em; color: #555;">${sub}</span>
+                <button type="button" class="favBtn ${isSubFav ? 'active' : ''}" data-main="${main}" data-sub="${sub}" data-type="sub" aria-label="Basculer favori de la sous-catégorie">
+                    ${isSubFav ? '★' : '☆'}
                 </button>
             `;
-
-            row.querySelector('.favBtn').addEventListener('click', async (e) => {
-                const data = {
-                    user: typeof user !== 'undefined' ? user.mail : '',
-                    type: favType ? favType.value : 'Dépense',
-                    main: e.currentTarget.dataset.main
-                };
-
-                const options = {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                };
-
-                try {
-                    const response = await fetch('../toggleFavorite', options);
-                    const json = await response.json();
-
-                    if (json.statut === 'success') {
-                        localStorage.setItem('dataAnalytics', JSON.stringify(json.data));
-                        renderFavorites();
-                    } else {
-                        alert(json.err || 'Erreur lors de la mise à jour du favori');
-                    }
-                } catch (err) {
-                    console.error('Erreur lors du toggle favori :', err);
-                }
-            });
-
-            container.append(row);
+            container.append(subRow);
         });
+    });
+
+    container.querySelectorAll('.favBtn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const current = e.currentTarget;
+            const isSub = current.dataset.type === 'sub';
+
+            const data = {
+                user: typeof user !== 'undefined' ? user.mail : '',
+                type: favType ? favType.value : 'Dépense',
+                main: current.dataset.main,
+                sub: isSub ? current.dataset.sub : '' // Uniquement envoyé si c'est une sous-catégorie
+            };
+
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            };
+
+            try {
+                const response = await fetch('../toggleFavorite', options);
+                const json = await response.json();
+
+                if (json.statut === 'success') {
+                    localStorage.setItem('dataAnalytics', JSON.stringify(json.data));
+                    renderFavorites();
+                } else {
+                    alert(json.err || 'Erreur lors de la mise à jour du favori');
+                }
+            } catch (err) {
+                console.error('Erreur lors du toggle favori :', err);
+            }
+        });
+    });
 }

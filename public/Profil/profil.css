@@ -222,6 +222,7 @@ input[type="text"]:focus, select:focus {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 /* ==========================================================================
    MENU BURGER & BLOC PROFIL / DÉCONNEXION
    ========================================================================== */
@@ -301,4 +302,49 @@ input[type="text"]:focus, select:focus {
     text-align: center;
     padding: 0.5rem;
   }
+}
+
+/* ==========================================================================
+   GESTION VISUELLE ET SÉLECTIVE DES FAVORIS
+   ========================================================================== */
+
+#favContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background-color: var(--card-bg);
+  overflow: hidden;
+}
+
+.favRow {
+  transition: background-color 0.2s ease;
+}
+
+.favRow:hover {
+  background-color: rgba(21, 138, 180, 0.05); /* Surlignage léger au survol */
+}
+
+/* Étoile vide par défaut (non favori) */
+.favBtn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #bdc3c7; /* Couleur grise neutre */
+  transition: transform 0.15s ease, color 0.15s ease;
+  padding: 0.2rem 0.5rem;
+  line-height: 1;
+}
+
+.favBtn:hover {
+  transform: scale(1.2);
+  color: #f1c40f; /* Aperçu doré temporaire au survol */
+}
+
+/* Étoile pleine active (uniquement s'il y a la classe active) */
+.favBtn.active {
+  color: #f1c40f !important; /* Jaune or persistant */
+  text-shadow: 0 0 4px rgba(241, 196, 15, 0.4);
 }

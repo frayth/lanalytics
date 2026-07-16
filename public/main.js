@@ -8,7 +8,7 @@ let currentCatSelect = '';
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
     initEventListeners();
-    showLastAdd();
+    loadLastTransactions();
     setCat();
 });
 
@@ -16,13 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
  * Initialisation de l'interface et gestion des accès utilisateur
  */
 function initUI() {
-    // Définition de la date par défaut sur la date du jour
     const dateInput = document.querySelector('#dateInput');
     if (dateInput) {
         dateInput.valueAsDate = new Date();
     }
 
-    // Gestion de l'état connecté / déconnecté dans le header
     const userConnect = document.querySelector('#userConnect');
     const userDisconnect = document.querySelector('#userDisconnect');
 
@@ -34,8 +32,10 @@ function initUI() {
         }
     }
 
-    // Vérification de présence de l'utilisateur (bloque l'accès si non identifié)
-    if (typeof user === 'undefined' || !user) {
+    const userAnalytics = localStorage.getItem('userAnalytics');
+    const user = userAnalytics ? JSON.parse(userAnalytics) : null;
+
+    if (!user) {
         const showContent = document.querySelector('#showContent');
         if (showContent) {
             showContent.innerHTML = '';
@@ -51,7 +51,6 @@ function initUI() {
  * Attachement des écouteurs d'événements
  */
 function initEventListeners() {
-    // Menu Burger Mobile
     const menuToggle = document.querySelector('#menuToggle');
     const navMenu = document.querySelector('#navMenu');
 
@@ -61,7 +60,6 @@ function initEventListeners() {
         });
     }
 
-    // Bouton de déconnexion
     const btnDisconnect = document.querySelector('#userDisconnect');
     if (btnDisconnect) {
         btnDisconnect.addEventListener('click', () => {
@@ -70,7 +68,6 @@ function initEventListeners() {
         });
     }
 
-    // Redirection pour l'ajout de catégorie
     const btnAddCategory = document.querySelector('#addCategory');
     if (btnAddCategory) {
         btnAddCategory.addEventListener('click', () => {
@@ -78,34 +75,103 @@ function initEventListeners() {
         });
     }
 
-    // Changement du type d'activité (dépense/revenu)
     const typeSelect = document.querySelector('#type');
     if (typeSelect) {
         typeSelect.addEventListener('change', setCat);
     }
 
-    // Soumission du formulaire d'ajout
     const formAdd = document.querySelector('#formAdd');
     if (formAdd) {
         formAdd.addEventListener('submit', submitForm);
     }
 
-    // Délégation d'événements pour la suppression d'une activité dans la liste
-    const lastContent = document.querySelector('#lastContent');
-    if (lastContent) {
-        lastContent.addEventListener('click', (e) => {
-            if (e.target && e.target.classList.contains('cross')) {
-                const timeStamp = e.target.dataset.timestamp;
-                if (timeStamp) {
-                    deleteElement(timeStamp);
-                }
-            }
+    // Délégation d'événement sur la liste
+    document.addEventListener('click', (e) => {
+        const btnDelete = e.target.closest('.btn-delete-trans');
+        if (btnDelete) {
+            const timeStamp = btnDelete.dataset.timestamp;
+            const date = btnDelete.dataset.date;
+            const name = btnDelete.dataset.name;
+            confirmDeleteTransaction({ timeStamp, date, name });
+        }
+    });
+}
+
+/**
+ * Modal de confirmation dynamique en JS/HTML natif
+ */
+function confirmDeleteTransaction(transactionData) {
+    const oldModal = document.querySelector('#deleteConfirmModal');
+    if (oldModal) oldModal.remove();
+
+    const dialog = document.createElement('dialog');
+    dialog.id = 'deleteConfirmModal';
+    dialog.style.cssText = `
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        max-width: 400px;
+        width: 90%;
+        margin: auto;
+    `;
+
+    dialog.innerHTML = `
+        <h4 style="margin-bottom: 0.75rem; font-size: 1.1rem;">Confirmer la suppression</h4>
+        <p style="margin-bottom: 1.25rem; color: #64748b; font-size: 0.95rem;">
+            Voulez-vous vraiment supprimer <strong>${transactionData.name || 'cette transaction'}</strong> ?
+        </p>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+            <button id="btnCancelDelete" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer;">Annuler</button>
+            <button id="btnConfirmDelete" style="padding: 0.5rem 1rem; border: none; background: #ef4444; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600;">Supprimer</button>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    dialog.querySelector('#btnCancelDelete').addEventListener('click', () => {
+        dialog.close();
+        dialog.remove();
+    });
+
+    dialog.querySelector('#btnConfirmDelete').addEventListener('click', async () => {
+        dialog.close();
+        dialog.remove();
+        await executeDeleteTransaction(transactionData);
+    });
+}
+
+/**
+ * Suppression côté serveur
+ */
+async function executeDeleteTransaction(element) {
+    const userAnalytics = localStorage.getItem('userAnalytics');
+    const userMail = userAnalytics ? JSON.parse(userAnalytics).mail : '';
+
+    if (!userMail) return;
+
+    try {
+        const response = await fetch('/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: userMail, element: element })
         });
+
+        const json = await response.json();
+
+        if (json.statut === 'success') {
+            loadLastTransactions();
+        } else {
+            alert(json.err || 'Erreur lors de la suppression');
+        }
+    } catch (err) {
+        console.error("Erreur suppression :", err);
     }
 }
 
 /**
- * Traitement et envoi du formulaire vers le serveur (/add)
+ * Soumission formulaire
  */
 async function submitForm(e) {
     e.preventDefault();
@@ -116,12 +182,11 @@ async function submitForm(e) {
         return;
     }
 
-    const data = {
-        user: typeof user !== 'undefined' ? user.mail : '',
-        timeStamp: Date.now()
-    };
+    const userAnalytics = localStorage.getItem('userAnalytics');
+    const userMail = userAnalytics ? JSON.parse(userAnalytics).mail : '';
 
-    // Parcours dynamique des éléments du formulaire
+    const data = { user: userMail, timeStamp: Date.now() };
+
     for (const element of e.target.elements) {
         if (!element.name || element.name === 'submit') continue;
 
@@ -129,136 +194,99 @@ async function submitForm(e) {
             const [mainCat, name] = element.value.split('-');
             data['categorie'] = mainCat;
             data[element.name] = name;
-            element.value = '';
         } else if (element.name === 'frais') {
             data[element.name] = element.checked;
         } else {
             data[element.name] = element.value;
-            if (element.name !== 'type' && element.name !== 'date') {
-                element.value = '';
-            }
         }
     }
-
-    const options = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    };
 
     try {
-        const response = await fetch('/add', options);
+        const response = await fetch('/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
         const json = await response.json();
-        console.log(json);
         
-        // Mise à jour des données locales et rafraîchissement de la vue
-        localStorage.setItem('dataAnalytics', JSON.stringify(json.data));
-        showLastAdd();
+        if (json.statut === 'success') {
+            localStorage.setItem('dataAnalytics', JSON.stringify(json.data));
+            loadLastTransactions();
+            setCat();
+            e.target.reset();
+            const dateInput = document.querySelector('#dateInput');
+            if (dateInput) dateInput.valueAsDate = new Date();
+        } else {
+            alert(json.err || 'Erreur lors de l’ajout');
+        }
     } catch (err) {
-        console.error("Erreur lors de l'envoi de l'activité :", err);
+        console.error("Erreur ajout :", err);
     }
 }
 
 /**
- * Affichage des dernières activités enregistrées (cards modernes)
+ * Chargement des transactions
  */
-function showLastAdd() {
+async function loadLastTransactions() {
     const div = document.querySelector('#lastContent');
     if (!div) return;
-
-    div.innerHTML = '';
-    const storedData = localStorage.getItem('dataAnalytics');
-    if (!storedData) return;
-
-    const { lastUpdate } = JSON.parse(storedData);
-    if (!Array.isArray(lastUpdate)) return;
-
-    lastUpdate.forEach(({ categorie, timeStamp, name, type, montant, frais, description, date }) => {
-        const subdiv = document.createElement('div');
-
-        // Attribution de la classe CSS pour le liseré de couleur
-        let typeClass = 'type-depense';
-        if (type === 'delete') {
-            typeClass = 'type-delete';
-        } else if (type === 'revenue') {
-            typeClass = 'type-revenue';
-        }
-
-        subdiv.className = `subdiv ${typeClass}`;
-
-        const formattedDate = date ? date.split('-').reverse().join('-') : '';
-        const actionHtml = type === 'delete'
-            ? `<p class="deleteFile" style="color:#ef4444; font-weight:bold; font-size:0.8rem;">Supprimé</p>`
-            : `<img src="Image/cross.png" alt="Supprimer" class="cross" data-timestamp="${timeStamp}">`;
-
-        subdiv.innerHTML = `
-            <div class="firstInfoSubdiv">
-                <p class="dateShowDiv">Ajouté le ${new Date(timeStamp).toLocaleString()}</p>
-                ${actionHtml}
-            </div>
-            <div class="secondInfoSubdiv">
-                <div class="categorieShow"><p>${categorie}</p></div>
-                <div class="infoShowDiv">
-                    <p><strong>${name}</strong> (${formattedDate})</p>
-                    <p class="montantShow">${montant} €</p>
-                </div>
-            </div>
-            ${description ? `<p class="descShow">${description}</p>` : ''}
-        `;
-
-        div.appendChild(subdiv);
-    });
-}
-
-/**
- * Requête de suppression d'un élément (/delete)
- */
-async function deleteElement(elementTimeStamp) {
-    const storedData = localStorage.getItem('dataAnalytics');
-    if (!storedData) return;
-
-    const lastUpdateArray = JSON.parse(storedData).lastUpdate;
-    const index = lastUpdateArray.findIndex(({ timeStamp, type }) => elementTimeStamp == timeStamp && type !== 'delete');
-
-    if (index === -1) {
-        alert('Élément déjà supprimé ou introuvable');
-        return;
-    }
 
     const userAnalytics = localStorage.getItem('userAnalytics');
     const userMail = userAnalytics ? JSON.parse(userAnalytics).mail : '';
 
-    const data = { 
-        user: userMail, 
-        element: lastUpdateArray[index] 
-    };
-
-    const options = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    };
+    if (!userMail) return;
 
     try {
-        const response = await fetch('/delete', options);
+        const response = await fetch('/getLastTransactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: userMail })
+        });
+
         const json = await response.json();
 
-        if (json.statut === 'success') {
-            localStorage.setItem('dataAnalytics', JSON.stringify(json.data));
-        } else {
-            alert('Élément déjà supprimé dans la base de données');
-        }
-        
-        showLastAdd();
+        if (json.statut !== 'success' || !Array.isArray(json.data)) return;
+
+        div.innerHTML = '';
+
+        json.data.forEach(({ categorie, timeStamp, name, type, montant, description, date }) => {
+            const subdiv = document.createElement('div');
+            const typeClass = type === 'revenue' ? 'type-revenue' : 'type-depense';
+
+            subdiv.className = `subdiv ${typeClass}`;
+            const formattedDate = date ? date.split('-').reverse().join('-') : '';
+
+            subdiv.innerHTML = `
+                <div class="firstInfoSubdiv">
+                    <p class="dateShowDiv">Ajouté le ${new Date(timeStamp).toLocaleString()}</p>
+                    <button type="button" 
+                            class="btn-delete-trans" 
+                            data-timestamp="${timeStamp}"
+                            data-date="${date || ''}"
+                            data-name="${name || ''}"
+                            title="Supprimer">
+                        🗑️
+                    </button>
+                </div>
+                <div class="secondInfoSubdiv">
+                    <div class="categorieShow"><p>${categorie || ''}</p></div>
+                    <div class="infoShowDiv">
+                        <p><strong>${name || ''}</strong> (${formattedDate})</p>
+                        <p class="montantShow">${montant} €</p>
+                    </div>
+                </div>
+                ${description ? `<p class="descShow">${description}</p>` : ''}
+            `;
+
+            div.appendChild(subdiv);
+        });
     } catch (err) {
-        console.error("Erreur lors de la suppression :", err);
+        console.error("Erreur chargement :", err);
     }
 }
 
 /**
- * Mise à jour dynamique du sélecteur de catégories selon le type choisi.
- * Tri : catégories favorites en premier, puis ordre alphabétique.
- * Les sous-catégories sont également triées par ordre alphabétique.
+ * Gestion sélecteur catégorie
  */
 function setCat() {
     const typeElem = document.querySelector('#type');
@@ -267,48 +295,71 @@ function setCat() {
 
     if (!typeElem || !nameElem) return;
 
+    const storedData = localStorage.getItem('dataAnalytics');
+    if (!storedData) return;
+
+    const dataUser = JSON.parse(storedData);
+    if (!dataUser || !dataUser.categories) return;
+
     const type = typeElem.value;
     nameElem.innerHTML = '<option value="">Choisir la catégorie</option>';
 
-    if (typeof dataUser === 'undefined' || !dataUser.categories) return;
-
     let categories = [];
-    let favoris = [];
+    let favSubs = {};
 
     if (type === 'depense') {
         categories = Object.entries(dataUser.categories.depense || {});
-        favoris = dataUser.categories.favoris?.depense || [];
+        favSubs = dataUser.categories.favoris?.depense?.subs || {};
         if (labelFrais) labelFrais.hidden = false;
     } else {
         if (labelFrais) labelFrais.hidden = true;
         categories = Object.entries(dataUser.categories.revenue || {});
-        favoris = dataUser.categories.favoris?.revenue || [];
+        favSubs = dataUser.categories.favoris?.revenue?.subs || {};
     }
 
-    // Tri : favoris d'abord, puis ordre alphabétique dans chaque groupe
-    categories.sort(([a], [b]) => {
-        const aFav = favoris.includes(a);
-        const bFav = favoris.includes(b);
-        if (aFav !== bFav) return aFav ? -1 : 1;
-        return a.localeCompare(b, 'fr', { sensitivity: 'base' });
+    categories.sort(([a], [b]) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+
+    categories.forEach(([mainCategorie, sousCategories]) => {
+        const favList = favSubs[mainCategorie] || [];
+        const favSubCats = sousCategories.filter(sub => favList.includes(sub));
+
+        if (favSubCats.length > 0) {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = `★ ${mainCategorie}`;
+            optGroup.className = 'Cat Cat-Fav';
+
+            favSubCats.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+                .forEach(sub => {
+                    const option = document.createElement('option');
+                    option.textContent = `★ ${sub}`;
+                    option.value = `${mainCategorie}-${sub}`;
+                    option.title = mainCategorie;
+                    optGroup.append(option);
+                });
+
+            nameElem.append(optGroup);
+        }
     });
 
     categories.forEach(([mainCategorie, sousCategories]) => {
-        const mainCat = document.createElement('optgroup');
-        mainCat.id = `${mainCategorie}Opt`;
-        mainCat.label = favoris.includes(mainCategorie) ? `★ ${mainCategorie}` : mainCategorie;
-        mainCat.className = 'Cat';
+        const favList = favSubs[mainCategorie] || [];
+        const regularSubCats = sousCategories.filter(sub => !favList.includes(sub));
 
-        [...sousCategories]
-            .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
-            .forEach(categorie => {
-                const option = document.createElement('option');
-                option.textContent = categorie;
-                option.value = `${mainCategorie}-${categorie}`;
-                option.title = mainCategorie;
-                mainCat.append(option);
-            });
+        if (regularSubCats.length > 0) {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = mainCategorie;
+            optGroup.className = 'Cat';
 
-        nameElem.append(mainCat);
+            regularSubCats.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+                .forEach(sub => {
+                    const option = document.createElement('option');
+                    option.textContent = sub;
+                    option.value = `${mainCategorie}-${sub}`;
+                    option.title = mainCategorie;
+                    optGroup.append(option);
+                });
+
+            nameElem.append(optGroup);
+        }
     });
 }

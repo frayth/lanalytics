@@ -1,14 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Anton&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-color: #f3f9fa;
+  --bg-color: #f8fafc;
   --card-bg: #ffffff;
   --text-color: #2c3e50;
+  --text-muted: #64748b;
   --primary-color: #158ab4;
   --primary-hover: #0b5a77;
+  --primary-light: #eff6ff;
+  --success: #10b981;
+  --danger: #ef4444;
   --border-color: #e2e8f0;
-  --radius: 8px;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --radius: 12px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 * {
@@ -20,11 +27,14 @@
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Roboto', sans-serif;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Header */
+/* ==========================================================================
+   Header (Inchangé)
+   ========================================================================== */
 header {
   display: flex;
   align-items: center;
@@ -50,7 +60,7 @@ header h1 span {
   color: var(--primary-color);
 }
 
-/* Navigation */
+/* Navigation (Inchangé) */
 nav {
   display: flex;
   gap: 1rem;
@@ -73,7 +83,7 @@ nav a:hover, nav a.active {
   color: #ffffff;
 }
 
-/* Bloc Profil / Connexion */
+/* Bloc Profil / Connexion (Inchangé) */
 #disconnect {
   display: flex;
   align-items: center;
@@ -99,7 +109,6 @@ nav a:hover, nav a.active {
   transition: transform 0.2s ease;
 }
 
-/* Effet Hover incluant l'icône */
 .nav-user-link:hover {
   background-color: var(--primary-color);
   color: #ffffff;
@@ -118,7 +127,7 @@ nav a:hover, nav a.active {
   color: #ffffff !important;
 }
 
-/* Bouton Burger Mobile */
+/* Bouton Burger Mobile (Inchangé) */
 #menuToggle {
   display: none;
   flex-direction: column;
@@ -140,31 +149,42 @@ nav a:hover, nav a.active {
   transition: all 0.3s ease;
 }
 
-/* Layout général */
+/* ==========================================================================
+   Layout Général Moderne
+   ========================================================================== */
 .container, #showContent {
-  max-width: 800px;
+  max-width: 760px;
   margin: 2rem auto;
   padding: 0 1rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .card, #addContent {
   background-color: var(--card-bg);
   border-radius: var(--radius);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow);
-  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+  padding: 1.75rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover, #addContent:hover {
+  box-shadow: var(--shadow-md);
 }
 
 h3 {
-  text-align: center;
-  color: var(--text-color);
+  font-size: 1.25rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  color: var(--text-color);
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
 }
 
+/* ==========================================================================
+   Formulaires Modernisés
+   ========================================================================== */
 form, #formAdd {
   display: flex;
   flex-direction: column;
@@ -180,19 +200,20 @@ form, #formAdd {
 
 .form-group.row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.35rem;
 }
 
 label {
-  font-weight: 500;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 input[type="text"],
@@ -200,12 +221,21 @@ input[type="number"],
 input[type="date"],
 select {
   width: 100%;
-  height: 42px;
-  padding: 0.5rem;
+  height: 44px;
+  padding: 0.6rem 0.8rem;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text-color);
   background-color: #fff;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+input:focus, select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(21, 138, 180, 0.15);
 }
 
 .input-with-action {
@@ -214,102 +244,203 @@ select {
 }
 
 #addCategory, .btn-icon {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   border: 1px solid var(--border-color);
-  background: #fff;
-  border-radius: 6px;
+  background: var(--card-bg);
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  transition: all 0.2s ease;
+}
+
+#addCategory:hover, .btn-icon:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary-color);
 }
 
 #addCategory img, .btn-icon img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
+  width: 16px;
+  height: 16px;
 }
 
 .checkbox-field {
   display: flex;
   align-items: center;
-  height: 42px;
+  height: 44px;
+  gap: 0.5rem;
 }
 
 #frais {
   width: 18px;
   height: 18px;
+  accent-color: var(--primary-color);
   cursor: pointer;
 }
 
 .form-actions {
   display: flex;
-  justify-content: center;
-  margin-top: 1rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
 }
 
 #buttonAdd, .btn-primary {
   background-color: var(--primary-color);
   color: #ffffff;
   border: none;
-  border-radius: 6px;
-  padding: 0.75rem 2rem;
-  font-size: 1rem;
-  font-weight: 700;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
   width: 100%;
-  max-width: 250px;
+  transition: all 0.2s ease;
 }
 
+#buttonAdd:hover, .btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Liste des Transactions
+   ========================================================================== */
 #lastContent {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 1rem;
-}
-
-.subdiv {
-  background: #ffffff !important;
-  border: 1px solid var(--border-color);
-  border-left: 5px solid var(--primary-color);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  height: auto !important;
-  animation: fadeIn 0.3s ease-in-out;
 }
 
-.subdiv.type-revenue { border-left-color: #22c55e; }
-.subdiv.type-depense { border-left-color: #ef4444; }
-.subdiv.type-delete { border-left-color: #64748b; opacity: 0.6; }
+.subdiv {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: slideUp 0.25s ease-out;
+}
+
+.subdiv:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.subdiv::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background-color: var(--border-color);
+}
+
+.subdiv.type-revenue::before { background-color: var(--success); }
+.subdiv.type-depense::before { background-color: var(--danger); }
 
 .firstInfoSubdiv {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
 }
 
-.dateShowDiv { font-size: 0.8rem; color: #64748b; }
-.cross { width: 16px; height: 16px; cursor: pointer; opacity: 0.5; }
-.secondInfoSubdiv { display: flex; flex-direction: column; gap: 0.25rem; }
-.categorieShow { font-weight: 700; font-size: 1.1rem; }
-.infoShowDiv { display: flex; justify-content: space-between; align-items: center; }
-.montantShow { font-size: 1.3rem; font-weight: 700; }
+.dateShowDiv {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+.btn-delete-trans {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  opacity: 0.5;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  padding: 0.2rem;
+}
+
+.btn-delete-trans:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.secondInfoSubdiv {
+      display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    align-content: flex-start;
+    flex-direction: column;
+}
+
+.categorieShow p {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.infoShowDiv {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+}
+
+.infoShowDiv p strong {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.montantShow {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.descShow {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--bg-color);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* ==========================================================================
-   MOBILE & TABLETTE
+   Modale de Confirmation
+   ========================================================================== */
+.modal-content {
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-footer {
+  border-top: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   Responsive (Conservation des règles header)
    ========================================================================== */
 @media (max-width: 768px) {
   header {
