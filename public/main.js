@@ -85,6 +85,8 @@ function initEventListeners() {
         formAdd.addEventListener('submit', submitForm);
     }
 
+    document.querySelector('#transactionSearch')?.addEventListener('input', filterLastTransactions);
+
     // Délégation d'événement sur la liste
     document.addEventListener('click', (e) => {
         const btnDelete = e.target.closest('.btn-delete-trans');
@@ -224,6 +226,32 @@ async function submitForm(e) {
     }
 }
 
+function normalizeSearchText(value) {
+    return value.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+}
+
+function filterLastTransactions() {
+    const search = document.querySelector('#transactionSearch');
+    const emptyMessage = document.querySelector('#transactionSearchEmpty');
+    const query = normalizeSearchText(search.value.trim());
+    const amountQuery = query.replace(/[\s€]/g, '').replace(',', '.');
+    const dateQuery = query.replace(/\//g, '-');
+    let hasResult = false;
+
+    document.querySelectorAll('#lastContent > .subdiv').forEach((card) => {
+        const { searchName, searchAmounts, searchDates } = card.dataset;
+        const matches = !query
+            || searchName.includes(query)
+            || (amountQuery && searchAmounts.split(' ').some((amount) => amount.includes(amountQuery)))
+            || searchDates.split(' ').some((date) => date.includes(dateQuery));
+
+        card.hidden = !matches;
+        hasResult ||= Boolean(matches);
+    });
+
+    emptyMessage.hidden = !query || hasResult;
+}
+
 /**
  * Chargement des transactions
  */
@@ -256,9 +284,18 @@ async function loadLastTransactions() {
             subdiv.className = `subdiv ${typeClass}`;
             const formattedDate = date ? date.split('-').reverse().join('-') : '';
 
+            const addedDate = new Date(timeStamp);
+            const frenchAddedDate = addedDate.toLocaleDateString('fr-FR', {
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            }).replaceAll('/', '-');
+
+            subdiv.dataset.searchName = normalizeSearchText(name || '');
+            subdiv.dataset.searchAmounts = [montant, Number(montant).toFixed(2)].join(' ');
+            subdiv.dataset.searchDates = [date, formattedDate, frenchAddedDate].join(' ');
+
             subdiv.innerHTML = `
                 <div class="firstInfoSubdiv">
-                    <p class="dateShowDiv">Ajouté le ${new Date(timeStamp).toLocaleString()}</p>
+                    <p class="dateShowDiv">Ajouté le ${addedDate.toLocaleString()}</p>
                     <button type="button" 
                             class="btn-delete-trans" 
                             data-timestamp="${timeStamp}"
@@ -280,6 +317,8 @@ async function loadLastTransactions() {
 
             div.appendChild(subdiv);
         });
+
+        filterLastTransactions();
     } catch (err) {
         console.error("Erreur chargement :", err);
     }

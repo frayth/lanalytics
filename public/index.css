@@ -216,6 +216,7 @@ label {
   color: var(--text-muted);
 }
 
+input[type="search"],
 input[type="text"],
 input[type="number"],
 input[type="date"],
@@ -309,6 +310,14 @@ input:focus, select:focus {
 /* ==========================================================================
    Liste des Transactions
    ========================================================================== */
+.transaction-search {
+  margin-bottom: 0.75rem;
+}
+
+#lastContent > [hidden] {
+  display: none;
+}
+
 #lastContent {
   display: flex;
   flex-direction: column;
