@@ -449,3 +449,11 @@ nav a:hover, nav a.active {
 .expense-amounts { text-align: right; white-space: nowrap; }
 .expense-amounts small { display: block; }
 .expense-breakdown li { padding: 0.25rem 0; }
+
+.annual-change {
+  display: block;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: normal;
+  text-align: right;
+}

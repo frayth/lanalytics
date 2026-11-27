@@ -77,15 +77,21 @@ function creatediv(year) {
     yearButton.addEventListener('click', () => {
         requestData('getData', year).then(response => {
             if (!response || !response.body) return;
-            const { depense, revenu } = response.body;
-            const colorBalance = (revenu - depense) >= 0 ? '#22c55e' : '#ef4444';
+            const { depense, revenu, previousTotals } = response.body;
+            const priorYear = Number(year) - 1;
+            const balance = revenu - depense;
+            const priorBalance = previousTotals.revenu - previousTotals.depense;
+            const colorBalance = balance >= 0 ? '#22c55e' : '#ef4444';
+            const annualAmount = (value, prior) =>
+                `<span class="montant">${euro.format(value)}<small class="annual-change">${changeEuro.format(value - prior)} vs ${priorYear}</small></span>`;
 
             resultDiv.innerHTML = `
                 <p class="result">${year}</p>
-                <p class="depense"><span>Dépenses Annuelles :</span> <span class="montant">${depense.toFixed(2)} €</span></p>
-                <p class="revenu"><span>Revenus Annuels :</span> <span class="montant">${revenu.toFixed(2)} €</span></p>
-                <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
+                <p class="depense"><span>Dépenses annuelles</span> ${annualAmount(depense, previousTotals.depense)}</p>
+                <p class="revenu"><span>Revenus annuels</span> ${annualAmount(revenu, previousTotals.revenu)}</p>
+                <p class="balance" style="color:${colorBalance}"><span>Balance</span> ${annualAmount(balance, priorBalance)}</p>
             `;
+            renderExpenseBreakdown(resultDiv, response.body, String(priorYear), 'cette année');
             dayDiv.innerHTML = '';
         });
     });
@@ -112,7 +118,7 @@ function creatediv(year) {
                     <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
                 `;
 
-                renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12]);
+                renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12].toLowerCase(), 'ce mois-ci');
 
                 // Génération de la grille des jours
                 dayDiv.innerHTML = '';
@@ -190,14 +196,14 @@ function expenseDetails(parent, group) {
     return details;
 }
 
-function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previousMonth) {
+function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previousPeriod, periodLabel) {
     const section = document.createElement('section');
     section.className = 'expense-breakdown';
     const title = document.createElement('h3');
     title.textContent = 'Dépenses par catégorie';
     const caption = document.createElement('p');
-    caption.textContent = expenses.length ? `Total du mois et écart avec ${previousMonth.toLowerCase()}.`
-        : `Aucune dépense ce mois-ci. Comparaison avec ${previousMonth.toLowerCase()}.`;
+    caption.textContent = expenses.length ? `Total ${periodLabel} et écart avec ${previousPeriod}.`
+        : `Aucune dépense ${periodLabel}. Comparaison avec ${previousPeriod}.`;
     section.append(title, caption);
     for (const category of groupExpenses(expenses, previousExpenses, 'categorie')) {
         const details = expenseDetails(section, category);
@@ -211,7 +217,7 @@ function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previous
                 list.append(payment);
             }
             if (sub.current.length) payments.append(list);
-            else payments.append('Aucun paiement ce mois-ci.');
+            else payments.append(`Aucun paiement ${periodLabel}.`);
         }
     }
     parent.append(section);
