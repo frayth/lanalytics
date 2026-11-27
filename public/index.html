@@ -84,7 +84,14 @@
       <h3>Dernières Activités</h3>
       <div class="form-group transaction-search">
         <label for="transactionSearch">Rechercher une activité</label>
-        <input type="search" id="transactionSearch" placeholder="Nom, description, montant ou date">
+        <div class="search-controls">
+          <input type="search" id="transactionSearch" placeholder="Montant">
+          <div class="search-modes" role="group" aria-label="Critère de recherche">
+            <button type="button" data-search-mode="amount" aria-label="Montant" title="Montant" aria-pressed="true">💶</button>
+            <button type="button" data-search-mode="text" aria-label="Nom ou description" title="Nom ou description" aria-pressed="false">📝</button>
+            <button type="button" data-search-mode="date" aria-label="Date" title="Date" aria-pressed="false">📅</button>
+          </div>
+        </div>
       </div>
       <div id="lastContent"></div>
       <p id="transactionSearchEmpty" role="status" hidden>Aucun résultat.</p>

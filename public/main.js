@@ -85,7 +85,16 @@ function initEventListeners() {
         formAdd.addEventListener('submit', submitForm);
     }
 
-    document.querySelector('#transactionSearch')?.addEventListener('input', filterLastTransactions);
+    const search = document.querySelector('#transactionSearch');
+    search?.addEventListener('input', filterLastTransactions);
+    const modeButtons = document.querySelectorAll('[data-search-mode]');
+    modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            modeButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+            search.placeholder = button.getAttribute('aria-label');
+            filterLastTransactions();
+        });
+    });
 
     // Délégation d'événement sur la liste
     document.addEventListener('click', (e) => {
@@ -234,6 +243,7 @@ function filterLastTransactions() {
     const search = document.querySelector('#transactionSearch');
     const emptyMessage = document.querySelector('#transactionSearchEmpty');
     const query = normalizeSearchText(search.value.trim());
+    const mode = document.querySelector('[data-search-mode][aria-pressed="true"]').dataset.searchMode;
     const amountQuery = query.replace(/[\s€]/g, '').replace(',', '.');
     const dateQuery = query.replace(/\//g, '-');
     let hasResult = false;
@@ -241,10 +251,9 @@ function filterLastTransactions() {
     document.querySelectorAll('#lastContent > .subdiv').forEach((card) => {
         const { searchName, searchDescription, searchAmounts, searchDates } = card.dataset;
         const matches = !query
-            || searchName.includes(query)
-            || searchDescription.includes(query)
-            || (amountQuery && searchAmounts.split(' ').some((amount) => amount.includes(amountQuery)))
-            || searchDates.split(' ').some((date) => date.includes(dateQuery));
+            || (mode === 'amount' && amountQuery && searchAmounts.split(' ').some((amount) => amount.includes(amountQuery)))
+            || (mode === 'text' && (searchName.includes(query) || searchDescription.includes(query)))
+            || (mode === 'date' && searchDates.split(' ').some((date) => date.includes(dateQuery)));
 
         card.hidden = !matches;
         hasResult ||= Boolean(matches);
