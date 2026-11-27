@@ -418,3 +418,34 @@ nav a:hover, nav a.active {
     padding: 0.5rem;
   }
 }
+
+.expense-breakdown {
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.expense-breakdown > p, .expense-amounts small {
+  color: #475569;
+  font-size: 0.85rem;
+}
+.expense-breakdown details {
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.45rem;
+}
+.expense-breakdown details details, .expense-breakdown ul {
+  margin-left: 1rem;
+}
+.expense-breakdown summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+.expense-breakdown summary::-webkit-details-marker { display: none; }
+.expense-breakdown summary::before { content: '▸'; }
+.expense-breakdown details[open] > summary::before { content: '▾'; }
+.expense-amounts { text-align: right; white-space: nowrap; }
+.expense-amounts small { display: block; }
+.expense-breakdown li { padding: 0.25rem 0; }

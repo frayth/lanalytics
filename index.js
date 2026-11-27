@@ -523,9 +523,16 @@ app.post("/requestData", async (request, response) => {
     } else if (options.day == null) {
       // agrégat sur le mois
       const rows = query(
-        `SELECT date, type, montant FROM transactions
-                 WHERE user_id = ? AND substr(date,1,4) = ? AND substr(date,6,2) = ? AND type != 'delete'`,
+        `SELECT date, type, montant, categorie, name, description FROM transactions
+                 WHERE user_id = ? AND substr(date,1,4) = ? AND substr(date,6,2) = ? AND type != 'delete' ORDER BY date DESC, timestamp DESC`,
         [user.id, options.year, options.month],
+      );
+      const previousExpenses = query(
+        `SELECT categorie, name, SUM(montant) AS montant FROM transactions
+         WHERE user_id = ? AND type = 'depense'
+           AND substr(date,1,7) = strftime('%Y-%m', ?, '-1 month')
+         GROUP BY categorie, name`,
+        [user.id, `${options.year}-${options.month}-01`],
       );
       let [depense, revenu, validDay] = [0, 0, []];
       rows.forEach((r) => {
@@ -535,7 +542,7 @@ app.post("/requestData", async (request, response) => {
       });
       return response.json({
         statut: "month",
-        body: { depense, revenu, validDay },
+        body: { depense, revenu, validDay, expenses: rows.filter((r) => r.type === "depense"), previousExpenses },
       });
     } else {
       // détail du jour

@@ -112,6 +112,8 @@ function creatediv(year) {
                     <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
                 `;
 
+                renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12]);
+
                 // Génération de la grille des jours
                 dayDiv.innerHTML = '';
                 const totalDays = daysInMonth(year, parseInt(currentMonth));
@@ -143,6 +145,76 @@ function creatediv(year) {
             });
         });
     });
+}
+
+const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const changeEuro = new Intl.NumberFormat('fr-FR', {
+    style: 'currency', currency: 'EUR', signDisplay: 'exceptZero'
+});
+
+function groupExpenses(current, previous, key) {
+    const groups = new Map();
+    function getGroup(row) {
+        const label = row[key] || (key === 'categorie' ? 'Sans catégorie' : 'Sans sous-catégorie');
+        if (!groups.has(label)) {
+            groups.set(label, { label, total: 0, priorTotal: 0, current: [], previous: [] });
+        }
+        return groups.get(label);
+    }
+    for (const row of current) {
+        const group = getGroup(row);
+        group.current.push(row);
+        group.total += Math.round(row.montant * 100);
+    }
+    for (const row of previous) {
+        const group = getGroup(row);
+        group.previous.push(row);
+        group.priorTotal += Math.round(row.montant * 100);
+    }
+    return [...groups.values()].sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'fr'));
+}
+
+function expenseDetails(parent, group) {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const label = document.createElement('strong');
+    label.textContent = group.label;
+    const amounts = document.createElement('span');
+    amounts.className = 'expense-amounts';
+    const delta = document.createElement('small');
+    delta.textContent = changeEuro.format((group.total - group.priorTotal) / 100);
+    amounts.append(euro.format(group.total / 100), delta);
+    summary.append(label, amounts);
+    details.append(summary);
+    parent.append(details);
+    return details;
+}
+
+function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previousMonth) {
+    const section = document.createElement('section');
+    section.className = 'expense-breakdown';
+    const title = document.createElement('h3');
+    title.textContent = 'Dépenses par catégorie';
+    const caption = document.createElement('p');
+    caption.textContent = expenses.length ? `Total du mois et écart avec ${previousMonth.toLowerCase()}.`
+        : `Aucune dépense ce mois-ci. Comparaison avec ${previousMonth.toLowerCase()}.`;
+    section.append(title, caption);
+    for (const category of groupExpenses(expenses, previousExpenses, 'categorie')) {
+        const details = expenseDetails(section, category);
+        for (const sub of groupExpenses(category.current, category.previous, 'name')) {
+            const payments = expenseDetails(details, sub);
+            const list = document.createElement('ul');
+            for (const row of sub.current) {
+                const payment = document.createElement('li');
+                const date = row.date.split('-').reverse().join('/');
+                payment.textContent = [date, euro.format(row.montant), row.description].filter(Boolean).join(' · ');
+                list.append(payment);
+            }
+            if (sub.current.length) payments.append(list);
+            else payments.append('Aucun paiement ce mois-ci.');
+        }
+    }
+    parent.append(section);
 }
 
 /**
