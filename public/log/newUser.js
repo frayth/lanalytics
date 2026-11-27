@@ -5,7 +5,8 @@ const age = document.querySelector('#age');
 const password = document.querySelector('#password');
 const verifPassword = document.querySelector('#verifMdp');
 const body=document.querySelector('body');
-document.querySelector('#valider').addEventListener('click', e => {
+document.querySelector('#form').addEventListener('submit', e => {
+    e.preventDefault();
         let p=document.querySelector('#error');
     p.hidden=true;
 

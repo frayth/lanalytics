@@ -1,5 +1,6 @@
 
-document.querySelector('#submit').addEventListener('click', e => {
+document.querySelector('#login').addEventListener('submit', e => {
+    e.preventDefault();
 
     if (document.querySelector('#loginMail').value == '' || document.querySelector('#loginMdp').value == '') {
         alert('veuillez compléter les champs de connexion');

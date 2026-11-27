@@ -1,43 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/design.css">
     <link rel="stylesheet" href="login.css">
-    <title>Site de Lauris</title>
+    <title>Créer un compte · LAnalytics</title>
 </head>
 
 <body>
-    <header>
-      <h1><span style="font-style: oblique;">L</span>Analytics</h1>
+    <header class="site-header"><div class="topbar"><a class="brand" href="/index.html" aria-label="LAnalytics, accueil"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>LAnalytics</a><a class="auth-link" href="/log/login.html" id="userConnect">Connexion</a></div></header>
 
-        <div id="divLogin">
-          <img src="../Image/profil.png" alt="iconProfil" id="iconProfil">
-          <a href="/log/login.html" id="userConnect">Connexion</a>
-        </div>
-      </header>
-
-    <div id="form">
-            <label for="newName" class="formElement" >Entrer votre Prénom</label>
+    <main class="auth-card"><h1>Créer un compte</h1>
+    <form id="form">
+            <label for="newName" class="formElement" >Prénom</label>
             <input type="text" id="newName" autocomplete="given-name" class="formElement">
-            <label for="newFamily" class="formElement">Entrer votre nom de famille</label>
+            <label for="newFamily" class="formElement">Nom de famille</label>
             <input type="text" id="newFamily" class="formElement" autocomplete="family-name">
-            <label for="mail" class="formElement">Entrer Votre e-mail</label>
+            <label for="mail" class="formElement">Adresse e-mail</label>
             <input type="email"  class="formElement" id="mail" autocomplete="email">
-            <label for="age" class="formElement">Sélectionner date de naissance</label>
+            <label for="age" class="formElement">Date de naissance</label>
             <input type="date" id="age" autocomplete="bday">
   
 
-            <label for="password" class="formElement">Entrer Votre mot de passe</label>
-            <input type="password" class="formElement"  id="password">
-            <label for="verifMdp" class="formElement" >Vérification mot de passe</label>
-            <input type="password" class="formElement" id="verifMdp" disabled>
+            <label for="password" class="formElement">Mot de passe (8 caractères minimum)</label>
+            <input type="password" autocomplete="new-password" class="formElement"  id="password">
+            <label for="verifMdp" class="formElement" >Confirmer le mot de passe</label>
+            <input type="password" autocomplete="new-password" class="formElement" id="verifMdp" disabled>
 
-        <button id="valider" class="formElement" >Envoyer</button>
+        <button id="valider" class="formElement" >Créer mon compte</button>
         
-    </div>
-    <p id="error" hidden class="formElement"></p>
+    </form>
+    <p role="status" id="error" hidden class="formElement"></p>
+    </main>
     <script src="newUser.js"></script>
 </body>
 

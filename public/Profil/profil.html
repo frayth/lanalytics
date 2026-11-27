@@ -4,38 +4,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/design.css">
   <link rel="stylesheet" href="profil.css">
   <title>LAnalytics - Gestion des Catégories</title>
 </head>
 
 <body>
-  <header>
-    <h1><span>L</span>Analytics</h1>
-
-    <input type="checkbox" id="menuToggle" hidden>
-    <label for="menuToggle" class="burger-btn" aria-label="Ouvrir le menu">
-      <span></span>
-      <span></span>
-      <span></span>
-    </label>
-
-    <nav>
-      <div id="disconnect">
-        <a href="#" id="userConnect">Connexion</a>
-        <a href="/log/login.html" id="userDisconnect" hidden>Déconnexion</a>
-      </div>
-
-      <a href="../index.html">Ajouter une Activité</a>
-      <a href="../show/show.html">Voir les données</a>
-      <a href="/show/analyses.html">Analyses</a>
-    </nav>
+  <header class="site-header">
+    <div class="topbar">
+      <a class="brand" href="/index.html" aria-label="LAnalytics, accueil"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>LAnalytics</a>
+      <nav class="tabs" aria-label="Navigation principale"><a href="/index.html">Activité</a><a href="/show/show.html">Voir les données</a><a href="/show/analyses.html">Analyses</a></nav>
+      <div class="account"><a id="userConnect" href="/log/login.html">Connexion</a><a href="/log/login.html" id="userDisconnect" hidden>Déconnexion</a></div>
+    </div>
   </header>
 
+  <h1 class="page-title">Mes catégories</h1>
   <main class="container">
     <div id="categoryDiv" class="card">
       <div class="card-header">
         <h2>Définir vos catégories</h2>
-        <img src="../Image/max.png" alt="Ouvrir/Fermer" class="set">
+        <button type="button" aria-label="Déplier ou replier cette section" aria-expanded="false" class="set">+</button>
       </div>
       
       <div class="choice" hidden>
@@ -60,7 +48,7 @@
     <div id="categoryDelDiv" class="card">
       <div class="card-header">
         <h2>Gérer vos catégories</h2>
-        <img src="../Image/max.png" alt="Ouvrir/Fermer" class="set">
+        <button type="button" aria-label="Déplier ou replier cette section" aria-expanded="false" class="set">+</button>
       </div>
 
       <div class="choice" hidden>

@@ -62,7 +62,18 @@ function creatediv(year, years) {
     const dayDiv = document.createElement('div');
     dayDiv.className = 'dayDiv';
 
-    firstDiv.append(yearDiv, monthDiv, dayDiv);
+    const monthLabel = document.createElement('label');
+    monthLabel.className = 'mobile-month';
+    monthLabel.textContent = 'Période';
+    const monthSelect = document.createElement('select');
+    monthSelect.add(new Option('Année entière', ''));
+    months.forEach((name, i) => monthSelect.add(new Option(name, String(i + 1))));
+    monthLabel.append(monthSelect);
+    firstDiv.append(yearDiv, monthLabel, monthDiv, dayDiv);
+    monthSelect.addEventListener('change', () => {
+        if (monthSelect.value) monthDiv.children[Number(monthSelect.value) - 1].click();
+        else showYear();
+    });
 
     // Bouton de l'Année
     const yearButton = document.createElement('button');
@@ -110,6 +121,8 @@ function creatediv(year, years) {
 
     yearButton.addEventListener('click', showYear);
     function showYear() {
+        monthSelect.value = '';
+        monthDiv.querySelector('[aria-pressed="true"]')?.setAttribute('aria-pressed', 'false');
         const id = ++requestId;
         const priorYear = isAnalysis ? select.value : String(Number(year) - 1);
         comparison.hidden = !isAnalysis;
@@ -145,7 +158,11 @@ function creatediv(year, years) {
         monthButton.className = 'button';
         monthDiv.append(monthButton);
 
+        monthButton.setAttribute('aria-pressed', 'false');
         monthButton.addEventListener('click', () => {
+            monthSelect.value = String(i + 1);
+            monthDiv.querySelector('[aria-pressed="true"]')?.setAttribute('aria-pressed', 'false');
+            monthButton.setAttribute('aria-pressed', 'true');
             const id = ++requestId;
             comparison.hidden = true;
             const currentMonth = (i + 1).toString().padStart(2, '0');
@@ -282,7 +299,7 @@ function attachExpenseTrend(details, year, month, filters) {
         const chart = document.createElement('expense-chart');
         panel.replaceChildren(chart, table);
         chart.draw('Dépenses sur 12 mois', labels, [
-            { label: 'Dépenses', data: response.rows.map(row => row.total), backgroundColor: '#158ab4' },
+            { label: 'Dépenses', data: response.rows.map(row => row.total), backgroundColor: '#116858' },
             { type: 'line', label: 'Panier moyen', data: response.rows.map(row => row.count ? row.total / row.count : null), borderColor: '#a34d17' }
         ]);
     });
@@ -304,8 +321,8 @@ function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previous
         section.append(chart);
         chart.style.height = `${Math.max(180, 60 + groups.length * 52)}px`;
         chart.draw('Comparaison par catégorie', groups.map(group => group.label), [
-            { label: 'Période sélectionnée', data: groups.map(group => group.total / 100), backgroundColor: '#158ab4' },
-            { label: previousPeriod, data: groups.map(group => group.priorTotal / 100), backgroundColor: '#94a3b8' }
+            { label: 'Période sélectionnée', data: groups.map(group => group.total / 100), backgroundColor: '#116858' },
+            { label: previousPeriod, data: groups.map(group => group.priorTotal / 100), backgroundColor: '#81938a' }
         ], true);
     }
     for (const category of groups) {
@@ -413,48 +430,44 @@ function openEditModal(item, year, month, day) {
     const existingModal = document.querySelector('#editModal');
     if (existingModal) existingModal.remove();
 
-    const modal = document.createElement('div');
+    const modal = document.createElement('dialog');
     modal.id = 'editModal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(15, 23, 42, 0.6);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 9999; backdrop-filter: blur(4px);
-    `;
+    modal.setAttribute('aria-labelledby', 'editTitle');
+    modal.addEventListener('close', () => modal.remove());
 
     const itemType = item.type || 'depense';
 
     modal.innerHTML = `
-        <div style="background: #ffffff; width: 90%; max-width: 420px; border-radius: 12px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); font-family: sans-serif;">
-            <h3 style="margin-top:0; margin-bottom:16px; font-size:1.25rem; color:#0f172a; text-align:center;">Modifier la transaction</h3>
+        <div>
+            <h3 id="editTitle">Modifier la transaction</h3>
             
-            <label style="display:block; font-size:0.85rem; color:#475569; margin-bottom:4px;">Type</label>
-            <select id="modalType" style="width:100%; padding:8px 12px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            <label for="modalType">Type</label>
+            <select id="modalType">
                 <option value="depense" ${itemType === 'depense' ? 'selected' : ''}>Dépense</option>
                 <option value="revenue" ${itemType === 'revenue' ? 'selected' : ''}>Revenu</option>
             </select>
 
-            <label style="display:block; font-size:0.85rem; color:#475569; margin-bottom:4px;">Catégorie</label>
-            <select id="modalCategorie" style="width:100%; padding:8px 12px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></select>
+            <label for="modalCategorie">Catégorie</label>
+            <select id="modalCategorie"></select>
             
-            <label style="display:block; font-size:0.85rem; color:#475569; margin-bottom:4px;">Montant (€)</label>
-            <input type="number" step="0.01" id="modalMontant" value="${item.montant || 0}" style="width:100%; padding:8px 12px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            <label for="modalMontant">Montant (€)</label>
+            <input type="number" step="0.01" id="modalMontant" value="${item.montant || 0}">
             
-            <label style="display:block; font-size:0.85rem; color:#475569; margin-bottom:4px;">Description</label>
-            <textarea id="modalDescription" rows="3" style="width:100%; padding:8px 12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">${item.description || ''}</textarea>
+            <label for="modalDescription">Description</label>
+            <textarea id="modalDescription" rows="3">${item.description || ''}</textarea>
             
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                <button id="btnModalDelete" style="background:#ef4444; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;">Supprimer</button>
-                <div style="display:flex; gap:8px;">
-                    <button id="btnModalCancel" style="background:#f1f5f9; color:#475569; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">Annuler</button>
-                    <button id="btnModalSave" style="background:#2563eb; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;">Enregistrer</button>
+            <div>
+                <button id="btnModalDelete">Supprimer</button>
+                <div>
+                    <button id="btnModalCancel">Annuler</button>
+                    <button id="btnModalSave">Enregistrer</button>
                 </div>
             </div>
         </div>
     `;
 
     document.body.appendChild(modal);
+    modal.showModal();
 
     const typeSelect = modal.querySelector('#modalType');
     const catSelect = modal.querySelector('#modalCategorie');

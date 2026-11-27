@@ -28,11 +28,13 @@ function initUI() {
             if (folder[i].hidden) {
                 folder[i].hidden = false;
                 secondFolder[i].hidden = false;
-                el.src = '../Image/minus.png';
+                el.textContent = '−';
+                el.setAttribute('aria-expanded', 'true');
             } else {
                 folder[i].hidden = true;
                 secondFolder[i].hidden = true;
-                el.src = '../Image/max.png';
+                el.textContent = '+';
+                el.setAttribute('aria-expanded', 'false');
             }
         });
     });
