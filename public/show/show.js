@@ -69,7 +69,7 @@ function creatediv(year, years) {
     yearButton.className = 'button';
     yearButton.style.width = '100%';
     yearButton.style.fontWeight = 'bold';
-    yearButton.textContent = `${year}`;
+    yearButton.textContent = isAnalysis ? 'Bilan annuel' : String(year);
     yearDiv.append(yearButton);
 
     mainContent.append(mainDiv);
@@ -81,15 +81,30 @@ function creatediv(year, years) {
     comparison.hidden = true;
     const select = document.createElement('select');
     if (isAnalysis) {
-        const previous = String(Number(year) - 1);
-        const choices = new Set([previous, ...years.map(String)]);
-        choices.delete(String(year));
-        for (const value of [...choices].sort((a, b) => Number(b) - Number(a))) {
-            select.add(new Option(value, value));
-        }
-        select.value = previous;
+        const yearLabel = document.createElement('label');
+        yearLabel.className = 'comparison-year';
+        yearLabel.textContent = 'Année à analyser ';
+        const yearSelect = document.createElement('select');
+        for (const value of years) yearSelect.add(new Option(value, value));
+        yearSelect.value = String(year);
+        yearLabel.append(yearSelect);
         comparison.append(select);
-        secondDiv.insertBefore(comparison, resultDiv);
+        yearDiv.prepend(yearLabel, comparison);
+
+        function setAnalysisYear() {
+            year = yearSelect.value;
+            const previous = String(Number(year) - 1);
+            const choices = new Set([previous, ...years.map(String)]);
+            choices.delete(year);
+            select.replaceChildren();
+            for (const value of [...choices].sort((a, b) => Number(b) - Number(a))) {
+                select.add(new Option(value, value));
+            }
+            select.value = previous;
+            showYear();
+        }
+        yearSelect.addEventListener('change', setAnalysisYear);
+        setAnalysisYear();
         select.addEventListener('change', showYear);
     }
 
@@ -562,7 +577,12 @@ async function requestData(type, year = null, month = null, day = null, extraDat
 
         if (type === 'getYears') {
             const years = json.years || [];
-            years.forEach(el => creatediv(el, years));
+            if (isAnalysis) {
+                if (years.length) creatediv(years[0], years);
+                else document.querySelector('#showContent').textContent = 'Aucune activité à analyser.';
+            } else {
+                years.forEach(el => creatediv(el, years));
+            }
             return;
         }
         return json;
