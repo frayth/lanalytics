@@ -457,3 +457,33 @@ nav a:hover, nav a.active {
   font-weight: normal;
   text-align: right;
 }
+
+.expense-trend {
+  overflow-x: auto;
+  margin: 0.5rem 0 1rem;
+}
+.expense-trend table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.expense-trend caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.4rem;
+}
+.expense-trend th, .expense-trend td {
+  text-align: right;
+  padding: 0.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.expense-trend td { white-space: nowrap; }
+.expense-trend th:first-child, .expense-trend td:first-child { text-align: left; }
+.expense-trend td:nth-child(2) { width: 32%; }
+.trend-bar {
+  display: block;
+  height: 4px;
+  background: var(--primary-color);
+  border-radius: 2px;
+}

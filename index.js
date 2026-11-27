@@ -505,6 +505,32 @@ app.post("/requestData", async (request, response) => {
     return response.json({ success: true, message: "Mis à jour avec succès" });
   }
 
+  if (type === "expenseTrend") {
+    const { year, month, extraData } = options;
+    if (!/^\d{4}$/.test(year) || !/^(0[1-9]|1[0-2])$/.test(month) ||
+        typeof extraData?.category !== "string" ||
+        (extraData.sub != null && typeof extraData.sub !== "string")) {
+      return response.status(400).json({ statut: "error" });
+    }
+    const rows = query(
+      `WITH RECURSIVE months(start) AS (
+         SELECT date(?, '-11 months')
+         UNION ALL SELECT date(start, '+1 month') FROM months WHERE start < ?
+       )
+       SELECT substr(m.start, 1, 7) AS month, COUNT(t.id) AS count,
+              COALESCE(SUM(t.montant), 0) AS total
+       FROM months m LEFT JOIN transactions t
+         ON t.user_id = ? AND t.type = 'depense'
+         AND t.date >= m.start AND t.date < date(m.start, '+1 month')
+         AND COALESCE(NULLIF(t.categorie, ''), 'Sans catégorie') = ?
+         AND (? IS NULL OR COALESCE(NULLIF(t.name, ''), 'Sans sous-catégorie') = ?)
+       GROUP BY m.start ORDER BY m.start`,
+      [`${year}-${month}-01`, `${year}-${month}-01`, user.id, extraData.category,
+       extraData.sub ?? null, extraData.sub ?? null],
+    );
+    return response.json({ rows });
+  }
+
   if (type === "getData") {
     console.log("someone call for data!");
 

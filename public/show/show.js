@@ -91,7 +91,9 @@ function creatediv(year) {
                 <p class="revenu"><span>Revenus annuels</span> ${annualAmount(revenu, previousTotals.revenu)}</p>
                 <p class="balance" style="color:${colorBalance}"><span>Balance</span> ${annualAmount(balance, priorBalance)}</p>
             `;
-            renderExpenseBreakdown(resultDiv, response.body, String(priorYear), 'cette année');
+            const today = new Date();
+            const endMonth = Number(year) === today.getFullYear() ? today.getMonth() + 1 : 12;
+            renderExpenseBreakdown(resultDiv, response.body, String(priorYear), 'cette année', year, String(endMonth).padStart(2, '0'));
             dayDiv.innerHTML = '';
         });
     });
@@ -118,7 +120,7 @@ function creatediv(year) {
                     <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
                 `;
 
-                renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12].toLowerCase(), 'ce mois-ci');
+                renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12].toLowerCase(), 'ce mois-ci', year, currentMonth);
 
                 // Génération de la grille des jours
                 dayDiv.innerHTML = '';
@@ -196,7 +198,51 @@ function expenseDetails(parent, group) {
     return details;
 }
 
-function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previousPeriod, periodLabel) {
+function attachExpenseTrend(details, year, month, filters) {
+    const panel = document.createElement('div');
+    panel.className = 'expense-trend';
+    details.append(panel);
+    let loaded = false;
+    details.addEventListener('toggle', async () => {
+        if (!details.open || loaded) return;
+        loaded = true;
+        panel.textContent = 'Chargement de l’évolution…';
+        const response = await requestData('expenseTrend', year, month, null, filters);
+        if (!Array.isArray(response?.rows)) {
+            loaded = false;
+            panel.textContent = 'Chargement impossible. Refermez puis rouvrez pour réessayer.';
+            return;
+        }
+        const table = document.createElement('table');
+        table.createCaption().textContent = 'Évolution sur 12 mois';
+        const header = table.createTHead().insertRow();
+        for (const title of ['Mois', 'Dépenses', 'Paiements', 'Panier moyen']) {
+            const cell = document.createElement('th');
+            cell.scope = 'col';
+            cell.textContent = title;
+            header.append(cell);
+        }
+        const max = Math.max(...response.rows.map((row) => row.total), 0);
+        const body = table.createTBody();
+        for (const { month: period, total, count } of response.rows) {
+            const row = body.insertRow();
+            const [y, m] = period.split('-');
+            const date = new Date(Number(y), Number(m) - 1, 1);
+            row.insertCell().textContent = date.toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
+            const amount = row.insertCell();
+            amount.textContent = euro.format(total);
+            const bar = document.createElement('span');
+            bar.className = 'trend-bar';
+            bar.style.width = `${max ? 100 * total / max : 0}%`;
+            amount.append(bar);
+            row.insertCell().textContent = count;
+            row.insertCell().textContent = count ? euro.format(total / count) : '—';
+        }
+        panel.replaceChildren(table);
+    });
+}
+
+function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previousPeriod, periodLabel, year, endMonth) {
     const section = document.createElement('section');
     section.className = 'expense-breakdown';
     const title = document.createElement('h3');
@@ -207,8 +253,10 @@ function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previous
     section.append(title, caption);
     for (const category of groupExpenses(expenses, previousExpenses, 'categorie')) {
         const details = expenseDetails(section, category);
+        attachExpenseTrend(details, year, endMonth, { category: category.label });
         for (const sub of groupExpenses(category.current, category.previous, 'name')) {
             const payments = expenseDetails(details, sub);
+            attachExpenseTrend(payments, year, endMonth, { category: category.label, sub: sub.label });
             const list = document.createElement('ul');
             for (const row of sub.current) {
                 const payment = document.createElement('li');
