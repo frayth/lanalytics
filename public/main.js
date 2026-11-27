@@ -239,9 +239,10 @@ function filterLastTransactions() {
     let hasResult = false;
 
     document.querySelectorAll('#lastContent > .subdiv').forEach((card) => {
-        const { searchName, searchAmounts, searchDates } = card.dataset;
+        const { searchName, searchDescription, searchAmounts, searchDates } = card.dataset;
         const matches = !query
             || searchName.includes(query)
+            || searchDescription.includes(query)
             || (amountQuery && searchAmounts.split(' ').some((amount) => amount.includes(amountQuery)))
             || searchDates.split(' ').some((date) => date.includes(dateQuery));
 
@@ -290,6 +291,7 @@ async function loadLastTransactions() {
             }).replaceAll('/', '-');
 
             subdiv.dataset.searchName = normalizeSearchText(name || '');
+            subdiv.dataset.searchDescription = normalizeSearchText(description || '');
             subdiv.dataset.searchAmounts = [montant, Number(montant).toFixed(2)].join(' ');
             subdiv.dataset.searchDates = [date, formattedDate, frenchAddedDate].join(' ');
 
