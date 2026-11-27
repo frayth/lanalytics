@@ -492,3 +492,18 @@ expense-chart {
   height: 240px;
   margin: 0.75rem 0;
 }
+
+.comparison-year:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+.comparison-year select {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: white;
+}

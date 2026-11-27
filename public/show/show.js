@@ -34,7 +34,7 @@ function initUI() {
 /**
  * Création dynamique du composant Bilan pour une année donnée
  */
-function creatediv(year) {
+function creatediv(year, years) {
     const mainContent = document.querySelector('#showContent') || document.body;
 
     const mainDiv = document.createElement('div');
@@ -74,12 +74,37 @@ function creatediv(year) {
 
     mainContent.append(mainDiv);
 
-    // Événement clic sur l'année
-    yearButton.addEventListener('click', () => {
-        requestData('getData', year).then(response => {
-            if (!response || !response.body) return;
+    let requestId = 0;
+    const comparison = document.createElement('label');
+    comparison.className = 'comparison-year';
+    comparison.textContent = 'Comparer avec ';
+    comparison.hidden = true;
+    const select = document.createElement('select');
+    if (isAnalysis) {
+        const previous = String(Number(year) - 1);
+        const choices = new Set([previous, ...years.map(String)]);
+        choices.delete(String(year));
+        for (const value of [...choices].sort((a, b) => Number(b) - Number(a))) {
+            select.add(new Option(value, value));
+        }
+        select.value = previous;
+        comparison.append(select);
+        secondDiv.insertBefore(comparison, resultDiv);
+        select.addEventListener('change', showYear);
+    }
+
+    yearButton.addEventListener('click', showYear);
+    function showYear() {
+        const id = ++requestId;
+        const priorYear = isAnalysis ? select.value : String(Number(year) - 1);
+        comparison.hidden = !isAnalysis;
+        requestData('getData', year, null, null, { comparisonYear: priorYear }).then(response => {
+            if (id !== requestId) return;
+            if (!response?.body) {
+                resultDiv.textContent = 'Impossible de charger le bilan annuel.';
+                return;
+            }
             const { depense, revenu, previousTotals } = response.body;
-            const priorYear = Number(year) - 1;
             const balance = revenu - depense;
             const priorBalance = previousTotals.revenu - previousTotals.depense;
             const annualAmount = (value, prior) => isAnalysis ?
@@ -96,7 +121,7 @@ function creatediv(year) {
             if (isAnalysis) renderExpenseBreakdown(resultDiv, response.body, String(priorYear), 'cette année', year, String(endMonth).padStart(2, '0'));
             dayDiv.innerHTML = '';
         });
-    });
+    }
 
     // Génération des boutons Mois
     months.forEach((monthName, i) => {
@@ -106,10 +131,12 @@ function creatediv(year) {
         monthDiv.append(monthButton);
 
         monthButton.addEventListener('click', () => {
+            const id = ++requestId;
+            comparison.hidden = true;
             const currentMonth = (i + 1).toString().padStart(2, '0');
 
             requestData('getData', year, currentMonth).then(response => {
-                if (!response || !response.body) return;
+                if (id !== requestId || !response?.body) return;
                 const { depense, revenu, validDay } = response.body;
 
                 resultDiv.innerHTML = `
@@ -139,7 +166,7 @@ function creatediv(year) {
 
                     button.addEventListener('click', () => {
                         requestData('getData', year, currentMonth, currentDay).then(resDay => {
-                            if (!resDay || !resDay.body) return;
+                            if (id !== requestId || !resDay?.body) return;
                             const { depense: dDep, revenu: dRev, infoDay } = resDay.body;
 
                             resultDiv.innerHTML = `
@@ -535,7 +562,7 @@ async function requestData(type, year = null, month = null, day = null, extraDat
 
         if (type === 'getYears') {
             const years = json.years || [];
-            years.forEach(el => creatediv(el));
+            years.forEach(el => creatediv(el, years));
             return;
         }
         return json;

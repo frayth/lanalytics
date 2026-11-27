@@ -537,7 +537,11 @@ app.post("/requestData", async (request, response) => {
     if (options.day == null) {
       const annual = options.month == null;
       const period = annual ? String(options.year) : `${options.year}-${options.month}`;
-      const start = annual ? `${period}-01-01` : `${period}-01`;
+      const referenceYear = options.extraData?.comparisonYear ?? Number(options.year) - 1;
+      if (annual && !/^\d{4}$/.test(referenceYear)) {
+        return response.status(400).json({ statut: "error", info: "Année de comparaison invalide" });
+      }
+      const start = annual ? `${referenceYear}-01-01` : `${period}-01`;
       const rows = query(
         `SELECT date, type, montant, categorie, name, description FROM transactions
          WHERE user_id = ? AND type != 'delete' AND substr(date,1,?) = ?
@@ -548,7 +552,7 @@ app.post("/requestData", async (request, response) => {
         `SELECT type, categorie, name, SUM(montant) AS montant FROM transactions
          WHERE user_id = ? AND type != 'delete' AND substr(date,1,?) = strftime(?, ?, ?)
          GROUP BY type, categorie, name`,
-        [user.id, period.length, annual ? "%Y" : "%Y-%m", start, annual ? "-1 year" : "-1 month"],
+        [user.id, period.length, annual ? "%Y" : "%Y-%m", start, annual ? "+0 days" : "-1 month"],
       );
       function totals(items) {
         const sums = { depense: 0, revenu: 0 };
