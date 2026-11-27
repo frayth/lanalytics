@@ -154,9 +154,11 @@ function getUserByEmail(email) {
 
 // ---------- Routes ----------
 
-app.listen(port, "localhost", async () => {
-  await initDb();
-  console.log(`Listening at ${port}`);
+initDb().then(() => {
+  app.listen(port, "localhost", () => console.log(`Listening at ${port}`));
+}).catch((error) => {
+  console.error("Initialisation de la base impossible", error);
+  process.exitCode = 1;
 });
 
 app.use(express.static(__dirname + "/public/"));

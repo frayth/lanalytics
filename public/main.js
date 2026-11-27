@@ -85,6 +85,17 @@ function initEventListeners() {
         formAdd.addEventListener('submit', submitForm);
     }
 
+    const search = document.querySelector('#transactionSearch');
+    search?.addEventListener('input', filterLastTransactions);
+    const modeButtons = document.querySelectorAll('[data-search-mode]');
+    modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            modeButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+            search.placeholder = button.getAttribute('aria-label');
+            filterLastTransactions();
+        });
+    });
+
     // Délégation d'événement sur la liste
     document.addEventListener('click', (e) => {
         const btnDelete = e.target.closest('.btn-delete-trans');
@@ -224,6 +235,33 @@ async function submitForm(e) {
     }
 }
 
+function normalizeSearchText(value) {
+    return value.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+}
+
+function filterLastTransactions() {
+    const search = document.querySelector('#transactionSearch');
+    const emptyMessage = document.querySelector('#transactionSearchEmpty');
+    const query = normalizeSearchText(search.value.trim());
+    const mode = document.querySelector('[data-search-mode][aria-pressed="true"]').dataset.searchMode;
+    const amountQuery = query.replace(/[\s€]/g, '').replace(',', '.');
+    const dateQuery = query.replace(/\//g, '-');
+    let hasResult = false;
+
+    document.querySelectorAll('#lastContent > .subdiv').forEach((card) => {
+        const { searchName, searchDescription, searchAmounts, searchDates } = card.dataset;
+        const matches = !query
+            || (mode === 'amount' && amountQuery && searchAmounts.split(' ').some((amount) => amount.includes(amountQuery)))
+            || (mode === 'text' && (searchName.includes(query) || searchDescription.includes(query)))
+            || (mode === 'date' && searchDates.split(' ').some((date) => date.includes(dateQuery)));
+
+        card.hidden = !matches;
+        hasResult ||= Boolean(matches);
+    });
+
+    emptyMessage.hidden = !query || hasResult;
+}
+
 /**
  * Chargement des transactions
  */
@@ -256,9 +294,19 @@ async function loadLastTransactions() {
             subdiv.className = `subdiv ${typeClass}`;
             const formattedDate = date ? date.split('-').reverse().join('-') : '';
 
+            const addedDate = new Date(timeStamp);
+            const frenchAddedDate = addedDate.toLocaleDateString('fr-FR', {
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            }).replaceAll('/', '-');
+
+            subdiv.dataset.searchName = normalizeSearchText(name || '');
+            subdiv.dataset.searchDescription = normalizeSearchText(description || '');
+            subdiv.dataset.searchAmounts = [montant, Number(montant).toFixed(2)].join(' ');
+            subdiv.dataset.searchDates = [date, formattedDate, frenchAddedDate].join(' ');
+
             subdiv.innerHTML = `
                 <div class="firstInfoSubdiv">
-                    <p class="dateShowDiv">Ajouté le ${new Date(timeStamp).toLocaleString()}</p>
+                    <p class="dateShowDiv">Ajouté le ${addedDate.toLocaleString()}</p>
                     <button type="button" 
                             class="btn-delete-trans" 
                             data-timestamp="${timeStamp}"
@@ -280,6 +328,8 @@ async function loadLastTransactions() {
 
             div.appendChild(subdiv);
         });
+
+        filterLastTransactions();
     } catch (err) {
         console.error("Erreur chargement :", err);
     }
