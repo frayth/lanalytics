@@ -245,13 +245,17 @@ nav a:hover, nav a.active {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #158ab4, #0b5a77);
+  background: linear-gradient(135deg, #105d7a, #093e52);
   color: #ffffff;
   padding: 1rem 1.25rem;
   border-radius: var(--radius);
   box-shadow: 0 4px 10px rgba(21, 138, 180, 0.25);
   font-size: 1.1rem;
   font-weight: 500;
+}
+
+.balance .annual-change {
+  color: inherit;
 }
 
 .balance span:last-child {
@@ -417,4 +421,89 @@ nav a:hover, nav a.active {
     text-align: center;
     padding: 0.5rem;
   }
+}
+
+.expense-breakdown {
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.expense-breakdown > p, .expense-amounts small {
+  color: #475569;
+  font-size: 0.85rem;
+}
+.expense-breakdown details {
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.45rem;
+}
+.expense-breakdown details details, .expense-breakdown ul {
+  margin-left: 1rem;
+}
+.expense-breakdown summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+.expense-breakdown summary::-webkit-details-marker { display: none; }
+.expense-breakdown summary::before { content: '▸'; }
+.expense-breakdown details[open] > summary::before { content: '▾'; }
+.expense-amounts { text-align: right; white-space: nowrap; }
+.expense-amounts small { display: block; }
+.expense-breakdown li { padding: 0.25rem 0; }
+
+.annual-change {
+  display: block;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: normal;
+  text-align: right;
+}
+
+.expense-trend {
+  overflow-x: auto;
+  margin: 0.5rem 0 1rem;
+}
+.expense-trend table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.expense-trend caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.4rem;
+}
+.expense-trend th, .expense-trend td {
+  text-align: right;
+  padding: 0.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.expense-trend td { white-space: nowrap; }
+.expense-trend th:first-child, .expense-trend td:first-child { text-align: left; }
+.expense-trend td:nth-child(2) { width: 32%; }
+expense-chart {
+  display: block;
+  position: relative;
+  min-width: 0;
+  height: 240px;
+  margin: 0.75rem 0;
+}
+
+.comparison-year:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+.comparison-year select {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: white;
 }

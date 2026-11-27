@@ -2,6 +2,7 @@
    LAnalytics - Script de consultation des données (show.js)
    ========================================================================== */
 
+const isAnalysis = document.body.dataset.view === 'analyses';
 const months = 'Janvier Février Mars Avril Mai Juin Juillet Août Septembre Octobre Novembre Décembre'.split(' ');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,7 +34,7 @@ function initUI() {
 /**
  * Création dynamique du composant Bilan pour une année donnée
  */
-function creatediv(year) {
+function creatediv(year, years) {
     const mainContent = document.querySelector('#showContent') || document.body;
 
     const mainDiv = document.createElement('div');
@@ -68,27 +69,74 @@ function creatediv(year) {
     yearButton.className = 'button';
     yearButton.style.width = '100%';
     yearButton.style.fontWeight = 'bold';
-    yearButton.textContent = `${year}`;
+    yearButton.textContent = isAnalysis ? 'Bilan annuel' : String(year);
     yearDiv.append(yearButton);
 
     mainContent.append(mainDiv);
 
-    // Événement clic sur l'année
-    yearButton.addEventListener('click', () => {
-        requestData('getData', year).then(response => {
-            if (!response || !response.body) return;
-            const { depense, revenu } = response.body;
-            const colorBalance = (revenu - depense) >= 0 ? '#22c55e' : '#ef4444';
+    let requestId = 0;
+    const comparison = document.createElement('label');
+    comparison.className = 'comparison-year';
+    comparison.textContent = 'Comparer avec ';
+    comparison.hidden = true;
+    const select = document.createElement('select');
+    if (isAnalysis) {
+        const yearLabel = document.createElement('label');
+        yearLabel.className = 'comparison-year';
+        yearLabel.textContent = 'Année à analyser ';
+        const yearSelect = document.createElement('select');
+        for (const value of years) yearSelect.add(new Option(value, value));
+        yearSelect.value = String(year);
+        yearLabel.append(yearSelect);
+        comparison.append(select);
+        yearDiv.prepend(yearLabel, comparison);
+
+        function setAnalysisYear() {
+            year = yearSelect.value;
+            const previous = String(Number(year) - 1);
+            const choices = new Set([previous, ...years.map(String)]);
+            choices.delete(year);
+            select.replaceChildren();
+            for (const value of [...choices].sort((a, b) => Number(b) - Number(a))) {
+                select.add(new Option(value, value));
+            }
+            select.value = previous;
+            showYear();
+        }
+        yearSelect.addEventListener('change', setAnalysisYear);
+        setAnalysisYear();
+        select.addEventListener('change', showYear);
+    }
+
+    yearButton.addEventListener('click', showYear);
+    function showYear() {
+        const id = ++requestId;
+        const priorYear = isAnalysis ? select.value : String(Number(year) - 1);
+        comparison.hidden = !isAnalysis;
+        requestData('getData', year, null, null, { comparisonYear: priorYear }).then(response => {
+            if (id !== requestId) return;
+            if (!response?.body) {
+                resultDiv.textContent = 'Impossible de charger le bilan annuel.';
+                return;
+            }
+            const { depense, revenu, previousTotals } = response.body;
+            const balance = revenu - depense;
+            const priorBalance = previousTotals.revenu - previousTotals.depense;
+            const annualAmount = (value, prior) => isAnalysis ?
+                `<span class="montant">${euro.format(value)}<small class="annual-change">${changeEuro.format(value - prior)} vs ${priorYear}</small></span>` : `<span class="montant">${euro.format(value)}</span>`;
 
             resultDiv.innerHTML = `
                 <p class="result">${year}</p>
-                <p class="depense"><span>Dépenses Annuelles :</span> <span class="montant">${depense.toFixed(2)} €</span></p>
-                <p class="revenu"><span>Revenus Annuels :</span> <span class="montant">${revenu.toFixed(2)} €</span></p>
-                <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
+                <p class="depense"><span>Dépenses annuelles</span> ${annualAmount(depense, previousTotals.depense)}</p>
+                <p class="revenu"><span>Revenus annuels</span> ${annualAmount(revenu, previousTotals.revenu)}</p>
+                <p class="balance"><span>Balance</span> ${annualAmount(balance, priorBalance)}</p>
             `;
+            const today = new Date();
+            const endMonth = Number(year) === today.getFullYear() ? today.getMonth() + 1 : 12;
+            if (isAnalysis) renderExpenseBreakdown(resultDiv, response.body, String(priorYear), 'cette année', year, String(endMonth).padStart(2, '0'));
             dayDiv.innerHTML = '';
         });
-    });
+    }
 
     // Génération des boutons Mois
     months.forEach((monthName, i) => {
@@ -98,19 +146,26 @@ function creatediv(year) {
         monthDiv.append(monthButton);
 
         monthButton.addEventListener('click', () => {
+            const id = ++requestId;
+            comparison.hidden = true;
             const currentMonth = (i + 1).toString().padStart(2, '0');
 
             requestData('getData', year, currentMonth).then(response => {
-                if (!response || !response.body) return;
+                if (id !== requestId || !response?.body) return;
                 const { depense, revenu, validDay } = response.body;
-                const colorBalance = (revenu - depense) >= 0 ? '#22c55e' : '#ef4444';
 
                 resultDiv.innerHTML = `
                     <p class="result">${months[i]} ${year}</p>
                     <p class="depense"><span>Dépenses Mensuelles :</span> <span class="montant">${depense.toFixed(2)} €</span></p>
                     <p class="revenu"><span>Revenus Mensuels :</span> <span class="montant">${revenu.toFixed(2)} €</span></p>
-                    <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
+                    <p class="balance"><span>Balance :</span> <span class="montant">${(revenu - depense).toFixed(2)} €</span></p>
                 `;
+
+                if (isAnalysis) {
+                    dayDiv.replaceChildren();
+                    renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12].toLowerCase(), 'ce mois-ci', year, currentMonth);
+                    return;
+                }
 
                 // Génération de la grille des jours
                 dayDiv.innerHTML = '';
@@ -126,15 +181,14 @@ function creatediv(year) {
 
                     button.addEventListener('click', () => {
                         requestData('getData', year, currentMonth, currentDay).then(resDay => {
-                            if (!resDay || !resDay.body) return;
+                            if (id !== requestId || !resDay?.body) return;
                             const { depense: dDep, revenu: dRev, infoDay } = resDay.body;
-                            const dayColor = (dRev - dDep) >= 0 ? '#22c55e' : '#ef4444';
 
                             resultDiv.innerHTML = `
                                 <p class="result">${d} ${months[parseInt(currentMonth) - 1]} ${year}</p>
                                 <p class="depense"><span>Dépenses Journalières :</span> <span class="montant">${dDep.toFixed(2)} €</span></p>
                                 <p class="revenu"><span>Revenus Journaliers :</span> <span class="montant">${dRev.toFixed(2)} €</span></p>
-                                <p class="balance"><span>Balance :</span> <span class="montant" style="color:${dayColor}">${(dRev - dDep).toFixed(2)} €</span></p>
+                                <p class="balance"><span>Balance :</span> <span class="montant">${(dRev - dDep).toFixed(2)} €</span></p>
                             `;
                             showAdd(infoDay, resultDiv, year, currentMonth, currentDay);
                         });
@@ -143,6 +197,134 @@ function creatediv(year) {
             });
         });
     });
+}
+
+const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const changeEuro = new Intl.NumberFormat('fr-FR', {
+    style: 'currency', currency: 'EUR', signDisplay: 'exceptZero'
+});
+
+function groupExpenses(current, previous, key) {
+    const groups = new Map();
+    function getGroup(row) {
+        const label = row[key] || (key === 'categorie' ? 'Sans catégorie' : 'Sans sous-catégorie');
+        if (!groups.has(label)) {
+            groups.set(label, { label, total: 0, priorTotal: 0, current: [], previous: [] });
+        }
+        return groups.get(label);
+    }
+    for (const row of current) {
+        const group = getGroup(row);
+        group.current.push(row);
+        group.total += Math.round(row.montant * 100);
+    }
+    for (const row of previous) {
+        const group = getGroup(row);
+        group.previous.push(row);
+        group.priorTotal += Math.round(row.montant * 100);
+    }
+    return [...groups.values()].sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'fr'));
+}
+
+function expenseDetails(parent, group) {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const label = document.createElement('strong');
+    label.textContent = group.label;
+    const amounts = document.createElement('span');
+    amounts.className = 'expense-amounts';
+    const delta = document.createElement('small');
+    delta.textContent = changeEuro.format((group.total - group.priorTotal) / 100);
+    amounts.append(euro.format(group.total / 100), delta);
+    summary.append(label, amounts);
+    details.append(summary);
+    parent.append(details);
+    return details;
+}
+
+function attachExpenseTrend(details, year, month, filters) {
+    const panel = document.createElement('div');
+    panel.className = 'expense-trend';
+    details.append(panel);
+    let loaded = false;
+    details.addEventListener('toggle', async () => {
+        if (!details.open || loaded) return;
+        loaded = true;
+        panel.textContent = 'Chargement de l’évolution…';
+        const response = await requestData('expenseTrend', year, month, null, filters);
+        if (!Array.isArray(response?.rows)) {
+            loaded = false;
+            panel.textContent = 'Chargement impossible. Refermez puis rouvrez pour réessayer.';
+            return;
+        }
+        const table = document.createElement('table');
+        table.createCaption().textContent = 'Évolution sur 12 mois';
+        const header = table.createTHead().insertRow();
+        for (const title of ['Mois', 'Dépenses', 'Paiements', 'Panier moyen']) {
+            const cell = document.createElement('th');
+            cell.scope = 'col';
+            cell.textContent = title;
+            header.append(cell);
+        }
+        const labels = [];
+        const body = table.createTBody();
+        for (const { month: period, total, count } of response.rows) {
+            const row = body.insertRow();
+            const [y, m] = period.split('-');
+            const date = new Date(Number(y), Number(m) - 1, 1);
+            row.insertCell().textContent = date.toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
+            labels.push(row.cells[0].textContent);
+            const amount = row.insertCell();
+            amount.textContent = euro.format(total);
+            row.insertCell().textContent = count;
+            row.insertCell().textContent = count ? euro.format(total / count) : '—';
+        }
+        const chart = document.createElement('expense-chart');
+        panel.replaceChildren(chart, table);
+        chart.draw('Dépenses sur 12 mois', labels, [
+            { label: 'Dépenses', data: response.rows.map(row => row.total), backgroundColor: '#158ab4' },
+            { type: 'line', label: 'Panier moyen', data: response.rows.map(row => row.count ? row.total / row.count : null), borderColor: '#a34d17' }
+        ]);
+    });
+}
+
+function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previousPeriod, periodLabel, year, endMonth) {
+    const section = document.createElement('section');
+    section.className = 'expense-breakdown';
+    const title = document.createElement('h3');
+    title.textContent = 'Dépenses par catégorie';
+    const caption = document.createElement('p');
+    caption.textContent = expenses.length ? `Total ${periodLabel} et écart avec ${previousPeriod}.`
+        : `Aucune dépense ${periodLabel}. Comparaison avec ${previousPeriod}.`;
+    section.append(title, caption);
+    const groups = groupExpenses(expenses, previousExpenses, 'categorie');
+    parent.append(section);
+    if (groups.length) {
+        const chart = document.createElement('expense-chart');
+        section.append(chart);
+        chart.style.height = `${Math.max(180, 60 + groups.length * 52)}px`;
+        chart.draw('Comparaison par catégorie', groups.map(group => group.label), [
+            { label: 'Période sélectionnée', data: groups.map(group => group.total / 100), backgroundColor: '#158ab4' },
+            { label: previousPeriod, data: groups.map(group => group.priorTotal / 100), backgroundColor: '#94a3b8' }
+        ], true);
+    }
+    for (const category of groups) {
+        const details = expenseDetails(section, category);
+        attachExpenseTrend(details, year, endMonth, { category: category.label });
+        for (const sub of groupExpenses(category.current, category.previous, 'name')) {
+            const payments = expenseDetails(details, sub);
+            attachExpenseTrend(payments, year, endMonth, { category: category.label, sub: sub.label });
+            const list = document.createElement('ul');
+            for (const row of sub.current) {
+                const payment = document.createElement('li');
+                const date = row.date.split('-').reverse().join('/');
+                payment.textContent = [date, euro.format(row.montant), row.description].filter(Boolean).join(' · ');
+                list.append(payment);
+            }
+            if (sub.current.length) payments.append(list);
+            else payments.append(`Aucun paiement ${periodLabel}.`);
+        }
+    }
 }
 
 /**
@@ -352,13 +534,12 @@ function refreshDayView(year, month, day) {
         if (!parent) return;
 
         const { depense: dDep, revenu: dRev, infoDay } = resDay.body;
-        const dayColor = (dRev - dDep) >= 0 ? '#22c55e' : '#ef4444';
 
         parent.innerHTML = `
             <p class="result">${parseInt(day)} ${months[parseInt(month) - 1]} ${year}</p>
             <p class="depense"><span>Dépenses Journalières :</span> <span class="montant">${dDep.toFixed(2)} €</span></p>
             <p class="revenu"><span>Revenus Journaliers :</span> <span class="montant">${dRev.toFixed(2)} €</span></p>
-            <p class="balance"><span>Balance :</span> <span class="montant" style="color:${dayColor}">${(dRev - dDep).toFixed(2)} €</span></p>
+            <p class="balance"><span>Balance :</span> <span class="montant">${(dRev - dDep).toFixed(2)} €</span></p>
         `;
         showAdd(infoDay, parent, year, month, day);
     });
@@ -396,7 +577,12 @@ async function requestData(type, year = null, month = null, day = null, extraDat
 
         if (type === 'getYears') {
             const years = json.years || [];
-            years.forEach(el => creatediv(el));
+            if (isAnalysis) {
+                if (years.length) creatediv(years[0], years);
+                else document.querySelector('#showContent').textContent = 'Aucune activité à analyser.';
+            } else {
+                years.forEach(el => creatediv(el, years));
+            }
             return;
         }
         return json;

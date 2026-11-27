@@ -505,38 +505,70 @@ app.post("/requestData", async (request, response) => {
     return response.json({ success: true, message: "Mis à jour avec succès" });
   }
 
+  if (type === "expenseTrend") {
+    const { year, month, extraData } = options;
+    if (!/^\d{4}$/.test(year) || !/^(0[1-9]|1[0-2])$/.test(month) ||
+        typeof extraData?.category !== "string" ||
+        (extraData.sub != null && typeof extraData.sub !== "string")) {
+      return response.status(400).json({ statut: "error" });
+    }
+    const rows = query(
+      `WITH RECURSIVE months(start) AS (
+         SELECT date(?, '-11 months')
+         UNION ALL SELECT date(start, '+1 month') FROM months WHERE start < ?
+       )
+       SELECT substr(m.start, 1, 7) AS month, COUNT(t.id) AS count,
+              COALESCE(SUM(t.montant), 0) AS total
+       FROM months m LEFT JOIN transactions t
+         ON t.user_id = ? AND t.type = 'depense'
+         AND t.date >= m.start AND t.date < date(m.start, '+1 month')
+         AND COALESCE(NULLIF(t.categorie, ''), 'Sans catégorie') = ?
+         AND (? IS NULL OR COALESCE(NULLIF(t.name, ''), 'Sans sous-catégorie') = ?)
+       GROUP BY m.start ORDER BY m.start`,
+      [`${year}-${month}-01`, `${year}-${month}-01`, user.id, extraData.category,
+       extraData.sub ?? null, extraData.sub ?? null],
+    );
+    return response.json({ rows });
+  }
+
   if (type === "getData") {
     console.log("someone call for data!");
 
-    if (options.month == null && options.day == null) {
-      // agrégat sur l'année entière
+    if (options.day == null) {
+      const annual = options.month == null;
+      const period = annual ? String(options.year) : `${options.year}-${options.month}`;
+      const referenceYear = options.extraData?.comparisonYear ?? Number(options.year) - 1;
+      if (annual && !/^\d{4}$/.test(referenceYear)) {
+        return response.status(400).json({ statut: "error", info: "Année de comparaison invalide" });
+      }
+      const start = annual ? `${referenceYear}-01-01` : `${period}-01`;
       const rows = query(
-        `SELECT type, montant FROM transactions WHERE user_id = ? AND substr(date,1,4) = ? AND type != 'delete'`,
-        [user.id, options.year],
+        `SELECT date, type, montant, categorie, name, description FROM transactions
+         WHERE user_id = ? AND type != 'delete' AND substr(date,1,?) = ?
+         ORDER BY date DESC, timestamp DESC`,
+        [user.id, period.length, period],
       );
-      let [depense, revenu] = [0, 0];
-      rows.forEach((r) => {
-        if (r.type === "depense") depense += r.montant;
-        else revenu += r.montant;
-      });
-      return response.json({ statut: "year", body: { depense, revenu } });
-    } else if (options.day == null) {
-      // agrégat sur le mois
-      const rows = query(
-        `SELECT date, type, montant FROM transactions
-                 WHERE user_id = ? AND substr(date,1,4) = ? AND substr(date,6,2) = ? AND type != 'delete'`,
-        [user.id, options.year, options.month],
+      const previous = query(
+        `SELECT type, categorie, name, SUM(montant) AS montant FROM transactions
+         WHERE user_id = ? AND type != 'delete' AND substr(date,1,?) = strftime(?, ?, ?)
+         GROUP BY type, categorie, name`,
+        [user.id, period.length, annual ? "%Y" : "%Y-%m", start, annual ? "+0 days" : "-1 month"],
       );
-      let [depense, revenu, validDay] = [0, 0, []];
-      rows.forEach((r) => {
-        validDay.push(r.date.split("-")[2]);
-        if (r.type === "depense") depense += r.montant;
-        else revenu += r.montant;
-      });
-      return response.json({
-        statut: "month",
-        body: { depense, revenu, validDay },
-      });
+      function totals(items) {
+        const sums = { depense: 0, revenu: 0 };
+        for (const row of items) {
+          sums[row.type === "depense" ? "depense" : "revenu"] += row.montant;
+        }
+        return sums;
+      }
+      const body = {
+        ...totals(rows),
+        expenses: rows.filter((row) => row.type === "depense"),
+        previousExpenses: previous.filter((row) => row.type === "depense"),
+      };
+      if (annual) body.previousTotals = totals(previous);
+      else body.validDay = rows.map((row) => row.date.split("-")[2]);
+      return response.json({ statut: annual ? "year" : "month", body });
     } else {
       // détail du jour
       const rows = query(
