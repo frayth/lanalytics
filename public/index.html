@@ -3,37 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/design.css">
   <link rel="stylesheet" href="index.css">
   <title>LAnalytics - Gestion des activités</title>
 </head>
 <body>
-  <header>
-    <h1><span>L</span>Analytics</h1>
-
-    <button type="button" id="menuToggle" aria-label="Ouvrir le menu">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-
-    <nav id="navMenu">
-      <div id="disconnect">
-        <a href="/log/login.html" id="userConnect" class="nav-user-link">
-          <img src="../Image/profil.png" alt="Profil" id="iconProfil">
-          <span>Connexion</span>
-        </a>
-        <a href="/log/login.html" id="userDisconnect" class="nav-disconnect-link" hidden>Déconnexion</a>
-      </div>
-
-      <a href="index.html" class="active">Ajouter une Activité</a>
-      <a href="/show/show.html">Voir les données</a>
-      <a href="/show/analyses.html">Analyses</a>
-    </nav>
+  <header class="site-header">
+    <div class="topbar">
+      <a class="brand" href="/index.html" aria-label="LAnalytics, accueil"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>LAnalytics</a>
+      <nav class="tabs" aria-label="Navigation principale"><a href="/index.html" aria-current="page">Activité</a><a href="/show/show.html">Voir les données</a><a href="/show/analyses.html">Analyses</a></nav>
+      <div class="account"><a id="userConnect" href="/log/login.html">Connexion</a><a href="/log/login.html" id="userDisconnect" hidden>Déconnexion</a></div>
+    </div>
   </header>
 
+  <h1 class="page-title">Ajouter une activité</h1>
   <main id="showContent" class="container">
     <section id="addContent" class="card">
-      <h3>Ajouter une activité</h3>
+      <h2>Nouvelle opération</h2>
       <form id="formAdd" action="/add" method="POST" title="Ajouter une dépense">
         
         <div id="firstSelectDiv" class="form-group row">
@@ -61,7 +47,7 @@
         <div id="secondSelectDiv" class="form-group row">
           <div class="field">
             <label for="montant">Montant (€)</label>
-            <input type="number" min="0.1" id="montant" step="0.01" name="montant" required>
+            <input type="number" inputmode="decimal" min="0.1" id="montant" step="0.01" name="montant" required>
           </div>
         </div>
 
@@ -76,13 +62,13 @@
         </div>
 
         <div id="buttonSelectDiv" class="form-actions">
-          <button type="submit" id="buttonAdd" name="submit" class="btn-primary">Envoyer</button>
+          <button type="submit" id="buttonAdd" name="submit" class="btn-primary">Enregistrer l’activité</button>
         </div>
       </form>
     </section>
 
     <section id="lastAdd" class="card">
-      <h3>Dernières Activités</h3>
+      <h2>Dernières activités</h2>
       <div class="form-group transaction-search">
         <label for="transactionSearch">Rechercher une activité</label>
         <div class="search-controls">

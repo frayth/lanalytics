@@ -1,35 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/design.css">
   <link rel="stylesheet" href="login.css">
-  <title>Site de Lauris</title>
+  <title>Connexion · LAnalytics</title>
 </head>
 
 <body>
-  <header>
-    <h1><span style="font-style: oblique;">L</span>Analytics</h1>
-
-
-      <div id="divLogin">
-        <img src="../Image/profil.png" alt="iconProfil" id="iconProfil">
-        <a href="/log/login.html" id="userConnect">Connexion</a>
-      </div>
-     
-
-    </header>
+  <header class="site-header"><div class="topbar"><a class="brand" href="/index.html" aria-label="LAnalytics, accueil"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>LAnalytics</a><a class="auth-link" href="/log/login.html" id="userConnect">Connexion</a></div></header>
   
-  <div id="pageContainer">
-    <h2>Merci de vous connecter</h2>
-    <div id="login">
+  <main id="pageContainer" class="auth-card">
+    <h1>Connexion</h1>
+    <form id="login">
+      <label for="loginMail">Adresse e-mail</label>
       <input type="email" autocomplete="email" placeholder="Adresse e-mail" id="loginMail">
-      <input type="password" placeholder="mot de passe" id="loginMdp">
-      <button id="submit">Valider</button>
-    </div>
-    <a href="newUser.html" id="new">Créer un nouveau Compte</a>
-  </div>
+      <label for="loginMdp">Mot de passe</label>
+      <input autocomplete="current-password" type="password" placeholder="mot de passe" id="loginMdp">
+      <button id="submit">Se connecter</button>
+    </form>
+    <a href="newUser.html" id="new">Créer un compte</a>
+  </main>
   <script src="user.js"></script>
   <script src="login.js"></script>
 

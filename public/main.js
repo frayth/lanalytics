@@ -51,15 +51,6 @@ function initUI() {
  * Attachement des écouteurs d'événements
  */
 function initEventListeners() {
-    const menuToggle = document.querySelector('#menuToggle');
-    const navMenu = document.querySelector('#navMenu');
-
-    if (menuToggle && navMenu) {
-        menuToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('open');
-        });
-    }
-
     const btnDisconnect = document.querySelector('#userDisconnect');
     if (btnDisconnect) {
         btnDisconnect.addEventListener('click', () => {
