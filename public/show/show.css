@@ -245,13 +245,17 @@ nav a:hover, nav a.active {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #158ab4, #0b5a77);
+  background: linear-gradient(135deg, #105d7a, #093e52);
   color: #ffffff;
   padding: 1rem 1.25rem;
   border-radius: var(--radius);
   box-shadow: 0 4px 10px rgba(21, 138, 180, 0.25);
   font-size: 1.1rem;
   font-weight: 500;
+}
+
+.balance .annual-change {
+  color: inherit;
 }
 
 .balance span:last-child {

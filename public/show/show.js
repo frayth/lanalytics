@@ -82,7 +82,6 @@ function creatediv(year) {
             const priorYear = Number(year) - 1;
             const balance = revenu - depense;
             const priorBalance = previousTotals.revenu - previousTotals.depense;
-            const colorBalance = balance >= 0 ? '#22c55e' : '#ef4444';
             const annualAmount = (value, prior) => isAnalysis ?
                 `<span class="montant">${euro.format(value)}<small class="annual-change">${changeEuro.format(value - prior)} vs ${priorYear}</small></span>` : `<span class="montant">${euro.format(value)}</span>`;
 
@@ -90,7 +89,7 @@ function creatediv(year) {
                 <p class="result">${year}</p>
                 <p class="depense"><span>Dépenses annuelles</span> ${annualAmount(depense, previousTotals.depense)}</p>
                 <p class="revenu"><span>Revenus annuels</span> ${annualAmount(revenu, previousTotals.revenu)}</p>
-                <p class="balance" style="color:${colorBalance}"><span>Balance</span> ${annualAmount(balance, priorBalance)}</p>
+                <p class="balance"><span>Balance</span> ${annualAmount(balance, priorBalance)}</p>
             `;
             const today = new Date();
             const endMonth = Number(year) === today.getFullYear() ? today.getMonth() + 1 : 12;
@@ -112,13 +111,12 @@ function creatediv(year) {
             requestData('getData', year, currentMonth).then(response => {
                 if (!response || !response.body) return;
                 const { depense, revenu, validDay } = response.body;
-                const colorBalance = (revenu - depense) >= 0 ? '#22c55e' : '#ef4444';
 
                 resultDiv.innerHTML = `
                     <p class="result">${months[i]} ${year}</p>
                     <p class="depense"><span>Dépenses Mensuelles :</span> <span class="montant">${depense.toFixed(2)} €</span></p>
                     <p class="revenu"><span>Revenus Mensuels :</span> <span class="montant">${revenu.toFixed(2)} €</span></p>
-                    <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
+                    <p class="balance"><span>Balance :</span> <span class="montant">${(revenu - depense).toFixed(2)} €</span></p>
                 `;
 
                 if (isAnalysis) {
@@ -143,13 +141,12 @@ function creatediv(year) {
                         requestData('getData', year, currentMonth, currentDay).then(resDay => {
                             if (!resDay || !resDay.body) return;
                             const { depense: dDep, revenu: dRev, infoDay } = resDay.body;
-                            const dayColor = (dRev - dDep) >= 0 ? '#22c55e' : '#ef4444';
 
                             resultDiv.innerHTML = `
                                 <p class="result">${d} ${months[parseInt(currentMonth) - 1]} ${year}</p>
                                 <p class="depense"><span>Dépenses Journalières :</span> <span class="montant">${dDep.toFixed(2)} €</span></p>
                                 <p class="revenu"><span>Revenus Journaliers :</span> <span class="montant">${dRev.toFixed(2)} €</span></p>
-                                <p class="balance"><span>Balance :</span> <span class="montant" style="color:${dayColor}">${(dRev - dDep).toFixed(2)} €</span></p>
+                                <p class="balance"><span>Balance :</span> <span class="montant">${(dRev - dDep).toFixed(2)} €</span></p>
                             `;
                             showAdd(infoDay, resultDiv, year, currentMonth, currentDay);
                         });
@@ -495,13 +492,12 @@ function refreshDayView(year, month, day) {
         if (!parent) return;
 
         const { depense: dDep, revenu: dRev, infoDay } = resDay.body;
-        const dayColor = (dRev - dDep) >= 0 ? '#22c55e' : '#ef4444';
 
         parent.innerHTML = `
             <p class="result">${parseInt(day)} ${months[parseInt(month) - 1]} ${year}</p>
             <p class="depense"><span>Dépenses Journalières :</span> <span class="montant">${dDep.toFixed(2)} €</span></p>
             <p class="revenu"><span>Revenus Journaliers :</span> <span class="montant">${dRev.toFixed(2)} €</span></p>
-            <p class="balance"><span>Balance :</span> <span class="montant" style="color:${dayColor}">${(dRev - dDep).toFixed(2)} €</span></p>
+            <p class="balance"><span>Balance :</span> <span class="montant">${(dRev - dDep).toFixed(2)} €</span></p>
         `;
         showAdd(infoDay, parent, year, month, day);
     });
