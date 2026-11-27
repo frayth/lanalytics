@@ -2,6 +2,7 @@
    LAnalytics - Script de consultation des données (show.js)
    ========================================================================== */
 
+const isAnalysis = document.body.dataset.view === 'analyses';
 const months = 'Janvier Février Mars Avril Mai Juin Juillet Août Septembre Octobre Novembre Décembre'.split(' ');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -82,8 +83,8 @@ function creatediv(year) {
             const balance = revenu - depense;
             const priorBalance = previousTotals.revenu - previousTotals.depense;
             const colorBalance = balance >= 0 ? '#22c55e' : '#ef4444';
-            const annualAmount = (value, prior) =>
-                `<span class="montant">${euro.format(value)}<small class="annual-change">${changeEuro.format(value - prior)} vs ${priorYear}</small></span>`;
+            const annualAmount = (value, prior) => isAnalysis ?
+                `<span class="montant">${euro.format(value)}<small class="annual-change">${changeEuro.format(value - prior)} vs ${priorYear}</small></span>` : `<span class="montant">${euro.format(value)}</span>`;
 
             resultDiv.innerHTML = `
                 <p class="result">${year}</p>
@@ -93,7 +94,7 @@ function creatediv(year) {
             `;
             const today = new Date();
             const endMonth = Number(year) === today.getFullYear() ? today.getMonth() + 1 : 12;
-            renderExpenseBreakdown(resultDiv, response.body, String(priorYear), 'cette année', year, String(endMonth).padStart(2, '0'));
+            if (isAnalysis) renderExpenseBreakdown(resultDiv, response.body, String(priorYear), 'cette année', year, String(endMonth).padStart(2, '0'));
             dayDiv.innerHTML = '';
         });
     });
@@ -120,7 +121,11 @@ function creatediv(year) {
                     <p class="balance"><span>Balance :</span> <span class="montant" style="color:${colorBalance}">${(revenu - depense).toFixed(2)} €</span></p>
                 `;
 
-                renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12].toLowerCase(), 'ce mois-ci', year, currentMonth);
+                if (isAnalysis) {
+                    dayDiv.replaceChildren();
+                    renderExpenseBreakdown(resultDiv, response.body, months[(i + 11) % 12].toLowerCase(), 'ce mois-ci', year, currentMonth);
+                    return;
+                }
 
                 // Génération de la grille des jours
                 dayDiv.innerHTML = '';
@@ -222,23 +227,25 @@ function attachExpenseTrend(details, year, month, filters) {
             cell.textContent = title;
             header.append(cell);
         }
-        const max = Math.max(...response.rows.map((row) => row.total), 0);
+        const labels = [];
         const body = table.createTBody();
         for (const { month: period, total, count } of response.rows) {
             const row = body.insertRow();
             const [y, m] = period.split('-');
             const date = new Date(Number(y), Number(m) - 1, 1);
             row.insertCell().textContent = date.toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
+            labels.push(row.cells[0].textContent);
             const amount = row.insertCell();
             amount.textContent = euro.format(total);
-            const bar = document.createElement('span');
-            bar.className = 'trend-bar';
-            bar.style.width = `${max ? 100 * total / max : 0}%`;
-            amount.append(bar);
             row.insertCell().textContent = count;
             row.insertCell().textContent = count ? euro.format(total / count) : '—';
         }
-        panel.replaceChildren(table);
+        const chart = document.createElement('expense-chart');
+        panel.replaceChildren(chart, table);
+        chart.draw('Dépenses sur 12 mois', labels, [
+            { label: 'Dépenses', data: response.rows.map(row => row.total), backgroundColor: '#158ab4' },
+            { type: 'line', label: 'Panier moyen', data: response.rows.map(row => row.count ? row.total / row.count : null), borderColor: '#a34d17' }
+        ]);
     });
 }
 
@@ -251,7 +258,18 @@ function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previous
     caption.textContent = expenses.length ? `Total ${periodLabel} et écart avec ${previousPeriod}.`
         : `Aucune dépense ${periodLabel}. Comparaison avec ${previousPeriod}.`;
     section.append(title, caption);
-    for (const category of groupExpenses(expenses, previousExpenses, 'categorie')) {
+    const groups = groupExpenses(expenses, previousExpenses, 'categorie');
+    parent.append(section);
+    if (groups.length) {
+        const chart = document.createElement('expense-chart');
+        section.append(chart);
+        chart.style.height = `${Math.max(180, 60 + groups.length * 52)}px`;
+        chart.draw('Comparaison par catégorie', groups.map(group => group.label), [
+            { label: 'Période sélectionnée', data: groups.map(group => group.total / 100), backgroundColor: '#158ab4' },
+            { label: previousPeriod, data: groups.map(group => group.priorTotal / 100), backgroundColor: '#94a3b8' }
+        ], true);
+    }
+    for (const category of groups) {
         const details = expenseDetails(section, category);
         attachExpenseTrend(details, year, endMonth, { category: category.label });
         for (const sub of groupExpenses(category.current, category.previous, 'name')) {
@@ -268,7 +286,6 @@ function renderExpenseBreakdown(parent, { expenses, previousExpenses }, previous
             else payments.append(`Aucun paiement ${periodLabel}.`);
         }
     }
-    parent.append(section);
 }
 
 /**
